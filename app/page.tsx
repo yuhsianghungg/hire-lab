@@ -36,7 +36,7 @@ export default function Home() {
           <p className="hero-text">一條為你而編的掛繩，一件從遠方而來的選物。<br />hire Lab. 讓每次出門，都多一點自己的樣子。</p>
           <div className="hero-actions"><a className="button button-dark" href="#custom">開始客製</a><a className="text-link" href="#shop">逛逛選物 <span>→</span></a></div>
         </div>
-        <div className="hero-art" aria-label="三色編織掛繩示意圖">
+        <div className="hero-art" aria-label="hire Lab. 手作掛繩封面照片">
           <div className="sun"></div><div className="arch arch-back"></div><div className="arch arch-front"></div>
           <div className="rope rope-a"></div><div className="rope rope-b"></div><div className="rope rope-c"></div>
           <div className="clip clip-a"></div><div className="clip clip-b"></div>
