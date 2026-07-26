@@ -25,7 +25,7 @@ export default function Home() {
         <button className="menu-button" aria-label="開啟選單" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "×" : "☰"}</button>
         <nav className={menuOpen ? "nav open" : "nav"}>
           <a href="#shop">選物商城</a><a href="#custom">客製掛繩</a><a href="#proxy">海外代購</a><a href="#story">品牌故事</a>
-          <button className="nav-cta" onClick={() => showNotice("會員功能將於下一階段開放")}>會員登入</button>
+          <a className="nav-cta" href="/login">會員登入</a>
         </nav>
       </header>
 

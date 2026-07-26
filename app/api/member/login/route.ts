@@ -1,0 +1,3 @@
+import { env } from "cloudflare:workers";
+import { createSession, verifyPassword } from "@/lib/member-auth";
+export async function POST(request: Request) { const { email, password } = await request.json(); const user = await env.DB.prepare("SELECT id,password_hash FROM users WHERE email=?").bind(String(email || "").trim().toLowerCase()).first<{ id: string; password_hash: string }>(); if (!user || !(await verifyPassword(String(password || ""), user.password_hash))) return Response.json({ error: "Email 或密碼不正確。" }, { status: 401 }); await createSession(user.id); return Response.json({ ok: true }); }
