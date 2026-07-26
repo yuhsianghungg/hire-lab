@@ -21,7 +21,7 @@ export default function AdminPage() {
   return (
     <main className="admin-shell">
       <aside className="admin-sidebar">
-        <a className="admin-brand" href="/"><span>CV</span><b>CordVoyage</b></a>
+        <a className="admin-brand" href="/"><span>HL</span><b>hire lab</b></a>
         <p className="admin-kicker">STUDIO ADMIN</p>
         <nav className="admin-nav" aria-label="後台選單">
           {["總覽", "訂單管理", "商品管理", "客製委託", "代購委託", "客戶名單"].map((item) => (
