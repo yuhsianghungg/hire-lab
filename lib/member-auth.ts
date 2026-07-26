@@ -11,7 +11,7 @@ const fromB64 = (value: string) => Uint8Array.from(atob(value.replaceAll("-", "+
 async function digest(value: string) { return b64(new Uint8Array(await crypto.subtle.digest("SHA-256", encoder.encode(value)))); }
 async function passwordHash(password: string, salt = b64(bytes(16))) {
   const key = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveBits"]);
-  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt: fromB64(salt), iterations: 210000, hash: "SHA-256" }, key, 256);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt: fromB64(salt), iterations: 100000, hash: "SHA-256" }, key, 256);
   return `${salt}.${b64(new Uint8Array(bits))}`;
 }
 export async function verifyPassword(password: string, saved: string) { const [salt] = saved.split("."); return (await passwordHash(password, salt)) === saved; }
