@@ -76,7 +76,7 @@ export default function Home() {
       <section className="story section" id="story"><div className="story-image"><div className="story-sun"></div><div className="story-line line-one"></div><div className="story-line line-two"></div><div className="story-line line-three"></div></div><div className="story-copy"><p className="eyebrow">A TINY JOURNEY</p><h2>關於<br />hire Lab.</h2><p>我們相信，每一次選擇都能成為生活的練習。從手作的溫度到世界的靈感，hire Lab. 陪你蒐集每一段值得記得的日常。</p><a className="text-link" href="#top">認識我們 <span>→</span></a></div></section>
 
       <section className="newsletter"><p className="eyebrow">A NOTE FROM US</p><h2>讓新的靈感，<br />寄到你的信箱。</h2><div className="email-form"><input aria-label="電子郵件" placeholder="your@email.com" type="email"/><button onClick={() => showNotice("謝謝訂閱！我們會寄來最新的手作消息。")} aria-label="訂閱">→</button></div></section>
-      <footer><a className="brand" href="#top"><span>HL</span> hire Lab.</a><p>Handmade cords & worldly objects.</p><div><a href="#shop">Instagram</a><a href="#top">LINE</a></div><small>© 2026 hire Lab. Prototype website.</small></footer>
+      <footer><a className="brand" href="#top"><img className="brand-logo" src="/hire-logo.png" alt="hire Lab. 標誌" /> hire Lab.</a><p>Handmade cords & worldly objects.</p><div><a href="https://www.instagram.com/hireee__/" target="_blank" rel="noreferrer">Instagram</a><a href="#top">LINE</a></div><small>© 2026 hire Lab. Prototype website.</small></footer>
       {notice && <div className="toast" role="status">{notice}</div>}
     </main>
   );
