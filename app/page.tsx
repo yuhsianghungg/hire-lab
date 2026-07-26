@@ -24,7 +24,7 @@ export default function Home() {
   return (
     <main>
       <header className="nav-wrap">
-        <a className="brand" href="#top" aria-label="hire Lab. 首頁"><span>HL</span> hire Lab.</a>
+        <a className="brand" href="#top" aria-label="hire Lab. 首頁"><img className="brand-logo" src="/hire-logo.png" alt="hire Lab. 標誌" /> hire Lab.</a>
         <button className="menu-button" aria-label="開啟選單" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "×" : "☰"}</button>
         <nav className={menuOpen ? "nav open" : "nav"}>
           <a href="#shop">選物商城</a><a href="#custom">客製掛繩</a><a href="#proxy">海外代購</a><a href="#story">品牌故事</a>
