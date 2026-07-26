@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const products = [
   { name: "Sora 手機掛繩", type: "手機掛繩", price: "NT$ 680", colors: ["#E9A98D", "#D76E60", "#F1D8B3"] },
@@ -12,6 +12,9 @@ export default function Home() {
   const [activeProduct, setActiveProduct] = useState(0);
   const [notice, setNotice] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [member, setMember] = useState<{ name: string } | null>(null);
+
+  useEffect(() => { fetch("/api/member/profile").then(async (r) => r.ok ? setMember((await r.json()).member) : null).catch(() => null); }, []);
 
   const showNotice = (message: string) => {
     setNotice(message);
@@ -25,7 +28,7 @@ export default function Home() {
         <button className="menu-button" aria-label="開啟選單" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "×" : "☰"}</button>
         <nav className={menuOpen ? "nav open" : "nav"}>
           <a href="#shop">選物商城</a><a href="#custom">客製掛繩</a><a href="#proxy">海外代購</a><a href="#story">品牌故事</a>
-          <a className="nav-cta" href="/login">會員登入</a>
+          {member ? <a className="nav-cta" href="/member">{member.name} 的帳戶</a> : <a className="nav-cta" href="/login">會員登入</a>}
         </nav>
       </header>
 
