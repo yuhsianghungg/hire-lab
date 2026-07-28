@@ -3,11 +3,10 @@
 import { FormEvent, useState } from "react";
 
 type Member = { id: string; name: string; email: string; role: string; status?: string };
-type Tab = "profile" | "points" | "credit" | "coupons" | "messages" | "orders" | "wishlist";
+type Tab = "profile" | "messages" | "orders" | "wishlist";
 
 const tabs: Array<[Tab, string]> = [
-  ["profile", "個人資訊"], ["points", "會員點數"], ["credit", "商店購物金"],
-  ["coupons", "優惠券"], ["messages", "訊息"], ["orders", "訂單"], ["wishlist", "追蹤清單"],
+  ["profile", "個人資訊"], ["messages", "訊息"], ["orders", "訂單"], ["wishlist", "追蹤清單"],
 ];
 
 export default function MemberDashboard({ member }: { member: Member }) {
