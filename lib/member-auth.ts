@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 const COOKIE = "hire_lab_session";
 const encoder = new TextEncoder();
@@ -21,10 +21,11 @@ export async function ensureMemberSchema() { await env.DB.batch([env.DB.prepare(
 export async function createSession(userId: string) {
   const token = b64(bytes(32)); const expires = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString();
   await env.DB.prepare("INSERT INTO sessions (id, user_id, token_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?)").bind(crypto.randomUUID(), userId, await digest(token), expires, now()).run();
-  const jar = await cookies(); jar.set(COOKIE, token, { httpOnly: true, sameSite: "lax", secure: true, path: "/", expires: new Date(expires) });
+  const requestHeaders = await headers(); const host = requestHeaders.get("host") || ""; const secure = requestHeaders.get("x-forwarded-proto") === "https" || (!host.startsWith("localhost") && !host.startsWith("127.0.0.1"));
+  const jar = await cookies(); jar.set(COOKIE, token, { httpOnly: true, sameSite: "lax", secure, path: "/", expires: new Date(expires) });
 }
 export async function currentMember(): Promise<Member | null> {
   const token = (await cookies()).get(COOKIE)?.value; if (!token) return null;
   return (await env.DB.prepare("SELECT u.id, u.email, u.name, u.role, u.status FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at > ?").bind(await digest(token), now()).first()) as Member | null;
 }
-export async function clearSession() { const jar = await cookies(); jar.set(COOKIE, "", { httpOnly: true, secure: true, path: "/", expires: new Date(0) }); }
+export async function clearSession() { const requestHeaders = await headers(); const host = requestHeaders.get("host") || ""; const secure = requestHeaders.get("x-forwarded-proto") === "https" || (!host.startsWith("localhost") && !host.startsWith("127.0.0.1")); const jar = await cookies(); jar.set(COOKIE, "", { httpOnly: true, secure, path: "/", expires: new Date(0) }); }
