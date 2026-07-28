@@ -5,7 +5,7 @@ export const users = sqliteTable("users", {
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
   passwordHash: text("password_hash").notNull(),
-  role: text("role", { enum: ["member", "admin"] }).notNull().default("member"),
+  role: text("role", { enum: ["member", "operator", "admin"] }).notNull().default("member"),
   status: text("status", { enum: ["active", "suspended"] }).notNull().default("active"),
   createdAt: text("created_at").notNull(),
 });
@@ -35,4 +35,14 @@ export const orders = sqliteTable("orders", {
   trackingNumber: text("tracking_number"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
+});
+
+export const auditLogs = sqliteTable("audit_logs", {
+  id: text("id").primaryKey(),
+  actorId: text("actor_id").notNull(),
+  action: text("action").notNull(),
+  resourceType: text("resource_type").notNull(),
+  resourceId: text("resource_id").notNull(),
+  details: text("details"),
+  createdAt: text("created_at").notNull(),
 });

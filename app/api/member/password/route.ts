@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { createPasswordHash, currentMember, ensureMemberSchema, verifyPassword } from "@/lib/member-auth";
+import { createPasswordHash, createSession, currentMember, ensureMemberSchema, revokeUserSessions, verifyPassword } from "@/lib/member-auth";
 
 export async function PATCH(request: Request) {
   await ensureMemberSchema();
@@ -10,5 +10,7 @@ export async function PATCH(request: Request) {
   const user = await env.DB.prepare("SELECT password_hash FROM users WHERE id=?").bind(member.id).first<{ password_hash: string }>();
   if (!user || !(await verifyPassword(String(currentPassword || ""), user.password_hash))) return Response.json({ error: "目前密碼不正確。" }, { status: 400 });
   await env.DB.prepare("UPDATE users SET password_hash=? WHERE id=?").bind(await createPasswordHash(String(newPassword)), member.id).run();
+  await revokeUserSessions(member.id);
+  await createSession(member.id);
   return Response.json({ ok: true });
 }
