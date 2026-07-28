@@ -42,7 +42,7 @@ export default function Home() {
           <div className="sun"></div><div className="arch arch-back"></div><div className="arch arch-front"></div>
           <div className="rope rope-a"></div><div className="rope rope-b"></div><div className="rope rope-c"></div>
           <div className="clip clip-a"></div><div className="clip clip-b"></div>
-          <p className="art-note">made slowly,<br />carried daily.</p>
+          <p className="art-note">hire Lab.</p>
         </div>
       </section>
 
