@@ -24,3 +24,15 @@ export const staffNotes = sqliteTable("staff_notes", {
   note: text("note").notNull(),
   createdAt: text("created_at").notNull(),
 });
+
+export const orders = sqliteTable("orders", {
+  id: text("id").primaryKey(),
+  orderNumber: text("order_number").notNull().unique(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  itemSummary: text("item_summary").notNull(),
+  total: integer("total").notNull(),
+  status: text("status").notNull().default("pending"),
+  trackingNumber: text("tracking_number"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
