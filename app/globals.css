@@ -2,8 +2,8 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Serif+TC:wght@500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap');
 
 /* 首頁大標題：桌面與手機版各縮小 3px */
-.hero h1 { font-size: clamp(28px, 3.2vw, 44px) !important; }
-@media (max-width: 760px) { .hero h1 { font-size: 28px !important; } }
+.hero h1 { font-size: clamp(18px, 2.4vw, 34px) !important; white-space: nowrap; letter-spacing: -1.5px !important; }
+@media (max-width: 760px) { .hero h1 { font-size: clamp(18px, 5.2vw, 22px) !important; } }
 
 :root { --ink:#24322d; --cream:#f6f2e9; --paper:#fffcf6; --coral:#d86659; --yellow:#e7c96f; --sage:#819785; --plum:#786582; }
 .brand-logo{width:31px;height:31px;object-fit:cover;border-radius:50%;clip-path:circle(50%);display:block;flex:none}
