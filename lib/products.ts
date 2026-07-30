@@ -67,7 +67,7 @@ export const products: Product[] = [
   },
   {
     slug: "pet-wrist-strap",
-    name: "寵物腕繩",
+    name: "寵物客製",
     type: "腕繩",
     price: 850,
     colors: ["#E8E2D6", "#D9D0B9", "#4A4A4D", "#F0EDE6", "#5B332C", "#232527"],
