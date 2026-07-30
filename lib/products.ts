@@ -41,6 +41,30 @@ export const products: Product[] = [
       { label: "照護方式", value: "建議局部輕柔清潔並自然陰乾，避免勾扯紗線" },
     ],
   },
+  {
+    slug: "between-lines-lanyard",
+    name: "行間",
+    type: "長背帶",
+    price: 1550,
+    colors: ["#C9A5A7", "#A59076", "#8C2346", "#607A91", "#77A99A"],
+    colorNames: ["晨霧粉", "燕麥棕", "莓果紅", "暮光藍", "薄荷綠"],
+    images: [
+      "/between-lines-misty-pink.jpg",
+      "/between-lines-oat-brown.jpg",
+      "/between-lines-berry-red.jpg",
+      "/between-lines-twilight-blue.jpg",
+      "/between-lines-mint-green.jpg",
+    ],
+    tagline: "讓色彩與繩結，在行走之間留下自己的節奏。",
+    description: "以連續環形繩結構成帶身主體，再混搭編繩、流蘇紗線與木質細節。豐富的手工層次在肩上自然延伸，讓日常攜帶多一份柔軟而鮮明的個性。",
+    features: ["立體環形繩結，呈現鮮明手作層次", "五款配色，各自搭配不同編繩細節", "雙端金屬扣，可搭配手機夾片或小包"],
+    specifications: [
+      { label: "款式", value: "長背帶，雙端金屬扣" },
+      { label: "材質", value: "棉繩、混合紗線、木質配件、合金五金" },
+      { label: "製作方式", value: "全手工編製" },
+      { label: "照護方式", value: "建議局部輕柔清潔並自然陰乾，避免拉扯繩結與流蘇" },
+    ],
+  },
 ];
 
 export const formatPrice = (price: number) => `NT$ ${price.toLocaleString("zh-TW")}`;
