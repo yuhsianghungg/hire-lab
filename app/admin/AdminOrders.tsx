@@ -9,9 +9,6 @@ type TrackedCart = {
   name: string;
   email: string | null;
   status: string;
-  reminder_opt_in: boolean;
-  reminder_due: boolean;
-  last_reminded_at: string | null;
   updated_at: string;
   total: number;
   items: { name: string; color_name: string; quantity: number; price: number }[];
@@ -54,13 +51,6 @@ export default function AdminOrders({ role }: { role: "operator" | "admin" }) {
     setNotice(response.ok ? "會員權限已更新。" : data.error);
     if (response.ok) loadMembers();
   };
-  const recordReminder = async (cartId: string) => {
-    const response = await fetch("/api/admin/carts", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ cartId, action: "mark_reminded" }) });
-    const data = await response.json();
-    setNotice(response.ok ? "已記錄本次購物車提醒。" : data.error);
-    if (response.ok) loadCarts();
-  };
-
   const title = section === "orders" ? "訂單管理" : section === "carts" ? "未結帳購物車" : "會員權限";
 
   return (
@@ -99,13 +89,13 @@ export default function AdminOrders({ role }: { role: "operator" | "admin" }) {
         </>}
 
         {section === "carts" && <article className="admin-order-table admin-cart-table">
-          <div className="admin-cart-summary"><div><b>{carts.length}</b><span>有商品的會員購物車</span></div><div><b>{carts.filter((cart) => cart.reminder_due).length}</b><span>已達提醒條件</span></div><div><b>24 hr</b><span>未結帳提醒門檻</span></div></div>
+          <div className="admin-cart-summary"><div><b>{carts.length}</b><span>有商品的會員購物車</span></div><div><b>{carts.reduce((sum, cart) => sum + cart.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0)}</b><span>購物車商品總數</span></div><div><b>NT$ {carts.reduce((sum, cart) => sum + cart.total, 0).toLocaleString()}</b><span>購物車商品總額</span></div></div>
           <h2>會員購物車內容</h2>
           {carts.length === 0 ? <p>目前沒有可追蹤的會員購物車。</p> : carts.map((cart) => <div className="admin-cart-row" key={cart.id}>
             <div className="admin-cart-owner"><b>{cart.name}</b><span>{cart.email || "聯絡資訊僅限 Admin"}</span><small>更新：{new Date(cart.updated_at).toLocaleString("zh-TW")}</small></div>
             <div className="admin-cart-products">{cart.items.map((item) => <span key={`${item.name}-${item.color_name}`}>{item.name}／{item.color_name} × {item.quantity}</span>)}</div>
             <strong>NT$ {cart.total.toLocaleString()}</strong>
-            <div className="admin-cart-reminder"><i className={cart.reminder_due ? "due" : ""}>{cart.reminder_due ? "待提醒" : cart.reminder_opt_in ? "追蹤中" : "未同意提醒"}</i>{cart.last_reminded_at && <small>上次：{new Date(cart.last_reminded_at).toLocaleDateString("zh-TW")}</small>}{role === "admin" && cart.reminder_opt_in && <button onClick={() => recordReminder(cart.id)}>記錄已提醒</button>}</div>
+            <i className={`admin-cart-status ${cart.status}`}>{cart.status === "converted" ? "已轉換訂單" : "購物車中"}</i>
           </div>)}
         </article>}
 
