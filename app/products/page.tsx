@@ -1,3 +1,4 @@
+import CartDrawer from "../CartDrawer";
 import ProductCatalog from "./ProductCatalog";
 
 export const metadata = {
@@ -10,7 +11,7 @@ export default function ProductsPage() {
     <main className="store-page">
       <header className="store-header">
         <a className="brand" href="/" aria-label="hire Lab. 首頁"><img className="brand-logo" src="/hire-logo.png" alt="hire Lab. 標誌" /> hire Lab.</a>
-        <nav><a href="/">首頁</a><a className="active" href="/products">全部商品</a><a href="/member">會員中心</a></nav>
+        <div className="store-header-actions"><nav><a href="/">首頁</a><a className="active" href="/products">全部商品</a><a href="/member">會員中心</a></nav><CartDrawer /></div>
       </header>
 
       <section className="catalog-hero">

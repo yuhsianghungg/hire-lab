@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { cartEvent, readCart, removeCartItem, replaceCart, updateCartQuantity, type CartItem } from "@/lib/cart";
-import { formatPrice } from "@/lib/products";
+import { formatPrice, getProduct } from "@/lib/products";
 
 export default function CartDrawer() {
   const [open, setOpen] = useState(false);
@@ -65,20 +65,27 @@ export default function CartDrawer() {
       <aside className={`cart-drawer ${open ? "open" : ""}`} aria-hidden={!open} aria-label="我的購物車">
         <header><div><p className="eyebrow">MY CART</p><h2>我的購物車</h2></div><button type="button" onClick={() => setOpen(false)} aria-label="關閉購物車">×</button></header>
         <div className="cart-items">
-          {items.length === 0 ? <div className="cart-empty"><span>🛒</span><h3>購物車還是空的</h3><p>挑一件喜歡的日常配件，<br />讓它陪你一起出門。</p><a href="/products">前往全部商品</a></div> : items.map((item) => (
-            <article className="cart-item" key={item.key}>
-              <a className="cart-item-visual" href={`/products/${item.slug}`}><i style={{ background: item.color }} /></a>
-              <div>
-                <a href={`/products/${item.slug}`}><b>{item.name}</b></a>
-                <span>{item.colorName}</span>
-                <strong>{formatPrice(item.price)}</strong>
-                <div className="cart-item-actions">
-                  <div><button type="button" onClick={() => changeQuantity(item.key, item.quantity - 1)}>−</button><span>{item.quantity}</span><button type="button" onClick={() => changeQuantity(item.key, item.quantity + 1)}>＋</button></div>
-                  <button type="button" onClick={() => remove(item.key)}>移除</button>
+          {items.length === 0 ? <div className="cart-empty"><span>🛒</span><h3>購物車還是空的</h3><p>挑一件喜歡的日常配件，<br />讓它陪你一起出門。</p><a href="/products">前往全部商品</a></div> : items.map((item) => {
+            const product = getProduct(item.slug);
+            const colorIndex = product?.colorNames.indexOf(item.colorName) ?? -1;
+            const productUrl = product ? `/products/${product.slug}` : "/products";
+            const image = product?.images[colorIndex >= 0 ? colorIndex : 0];
+
+            return (
+              <article className="cart-item" key={item.key}>
+                <a className="cart-item-visual" href={productUrl}>{image ? <img src={image} alt={`${item.name}－${item.colorName}`} /> : <i style={{ background: item.color }} />}</a>
+                <div>
+                  <a href={productUrl}><b>{item.name}</b></a>
+                  <span>{item.colorName}</span>
+                  <strong>{formatPrice(item.price)}</strong>
+                  <div className="cart-item-actions">
+                    <div><button type="button" onClick={() => changeQuantity(item.key, item.quantity - 1)}>−</button><span>{item.quantity}</span><button type="button" onClick={() => changeQuantity(item.key, item.quantity + 1)}>＋</button></div>
+                    <button type="button" onClick={() => remove(item.key)}>移除</button>
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
         {items.length > 0 && <footer><div><span>商品小計</span><strong>{formatPrice(total)}</strong></div><button type="button" onClick={() => window.alert("結帳功能將於商城正式上線後開放。")}>前往結帳</button><small>運費與付款方式將於結帳頁計算</small></footer>}
       </aside>

@@ -18,8 +18,22 @@ export function readCart(): CartItem[] {
   try {
     const value = JSON.parse(window.localStorage.getItem(storageKey) || "[]");
     if (!Array.isArray(value)) return [];
-    const items = value.filter((item): item is CartItem => Boolean(item?.slug && getProduct(item.slug)));
-    if (items.length !== value.length) window.localStorage.setItem(storageKey, JSON.stringify(items));
+    const items = value.flatMap((item): CartItem[] => {
+      const product = item?.slug ? getProduct(item.slug) : undefined;
+      if (!product) return [];
+      const colorIndex = product.colorNames.indexOf(String(item.colorName || ""));
+      const selected = colorIndex >= 0 ? colorIndex : 0;
+      return [{
+        key: `${product.slug}:${product.colorNames[selected]}`,
+        slug: product.slug,
+        name: product.name,
+        price: product.price,
+        color: product.colors[selected],
+        colorName: product.colorNames[selected],
+        quantity: Math.min(99, Math.max(1, Math.trunc(Number(item.quantity) || 1))),
+      }];
+    });
+    if (JSON.stringify(items) !== JSON.stringify(value)) window.localStorage.setItem(storageKey, JSON.stringify(items));
     return items;
   } catch {
     return [];

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import CartDrawer from "@/app/CartDrawer";
 import { getProduct, products } from "@/lib/products";
 import ProductPurchase from "./ProductPurchase";
 
@@ -21,7 +22,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     <main className="store-page product-page">
       <header className="store-header">
         <a className="brand" href="/" aria-label="hire Lab. 首頁"><img className="brand-logo" src="/hire-logo.png" alt="hire Lab. 標誌" /> hire Lab.</a>
-        <nav><a href="/">首頁</a><a href="/products">全部商品</a><a href="/member">會員中心</a></nav>
+        <div className="store-header-actions"><nav><a href="/">首頁</a><a href="/products">全部商品</a><a href="/member">會員中心</a></nav><CartDrawer /></div>
       </header>
       <nav className="breadcrumbs" aria-label="麵包屑"><a href="/">首頁</a><span>/</span><a href="/products">全部商品</a><span>/</span><b>{product.name}</b></nav>
       <ProductPurchase product={product} />
