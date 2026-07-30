@@ -22,7 +22,7 @@ export default function Home() {
         <a className="brand" href="#top" aria-label="hire Lab. 首頁"><img className="brand-logo" src="/hire-logo.png" alt="hire Lab. 標誌" /> hire Lab.</a>
         <button className="menu-button" aria-label="開啟選單" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "×" : "☰"}</button>
         <nav className={menuOpen ? "nav open" : "nav"}>
-          <a href="/products">選物商城</a><a href="#custom">客製掛繩</a><a href="#proxy">海外代購</a><a href="#story">品牌故事</a>
+          <a href="/products">全部商品</a><a href="#custom">客製掛繩</a><a href="#proxy">海外代購</a><a href="#story">品牌故事</a>
           {member ? <a className="nav-cta" href="/member">{member.name} 的帳戶</a> : <a className="nav-cta" href="/login">會員登入</a>}
         </nav>
       </header>
