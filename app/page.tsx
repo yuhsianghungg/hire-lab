@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-const products = [
-  { name: "Sora 手機掛繩", type: "手機掛繩", price: "NT$ 680", colors: ["#E9A98D", "#D76E60", "#F1D8B3"] },
-  { name: "Nami 相機手腕繩", type: "相機配件", price: "NT$ 880", colors: ["#829B87", "#D6C790", "#EFE5D8"] },
-  { name: "Lune 鑰匙圈", type: "日常配件", price: "NT$ 380", colors: ["#7F6C9D", "#E7B7C3", "#F2E8DC"] },
-];
+import { formatPrice, products } from "@/lib/products";
 
 export default function Home() {
   const [activeProduct, setActiveProduct] = useState(0);
@@ -27,7 +22,7 @@ export default function Home() {
         <a className="brand" href="#top" aria-label="hire Lab. 首頁"><img className="brand-logo" src="/hire-logo.png" alt="hire Lab. 標誌" /> hire Lab.</a>
         <button className="menu-button" aria-label="開啟選單" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "×" : "☰"}</button>
         <nav className={menuOpen ? "nav open" : "nav"}>
-          <a href="#shop">選物商城</a><a href="#custom">客製掛繩</a><a href="#proxy">海外代購</a><a href="#story">品牌故事</a>
+          <a href="/products">選物商城</a><a href="#custom">客製掛繩</a><a href="#proxy">海外代購</a><a href="#story">品牌故事</a>
           {member ? <a className="nav-cta" href="/member">{member.name} 的帳戶</a> : <a className="nav-cta" href="/login">會員登入</a>}
         </nav>
       </header>
@@ -54,14 +49,14 @@ export default function Home() {
       </section>
 
       <section className="section shop" id="shop">
-        <div className="section-head"><div><p className="eyebrow">CURATED FOR YOU</p><h2>本週選物</h2></div><a className="text-link" href="#shop">查看全部 <span>→</span></a></div>
+        <div className="section-head"><div><p className="eyebrow">CURATED FOR YOU</p><h2>本週選物</h2></div><a className="text-link" href="/products">查看全部 <span>→</span></a></div>
         <div className="products">
           {products.map((product, index) => <article className={activeProduct === index ? "product active" : "product"} key={product.name}>
-            <button className="product-image" onClick={() => setActiveProduct(index)} aria-label={`查看 ${product.name}`}>
+            <a className="product-image" href={`/products/${product.slug}`} onMouseEnter={() => setActiveProduct(index)} aria-label={`查看 ${product.name}`}>
               <div className="product-rope" style={{ background: `linear-gradient(135deg, ${product.colors[0]} 0 33%, ${product.colors[1]} 33% 66%, ${product.colors[2]} 66%)` }}></div>
               <span className="product-number">0{index + 1}</span>
-            </button>
-            <div className="product-info"><div><p>{product.type}</p><h3>{product.name}</h3></div><strong>{product.price}</strong></div>
+            </a>
+            <div className="product-info"><div><p>{product.type}</p><h3><a href={`/products/${product.slug}`}>{product.name}</a></h3></div><strong>{formatPrice(product.price)}</strong></div>
             <button className="add-button" onClick={() => showNotice(`${product.name} 已加入示範購物袋`)}>加入購物袋</button>
           </article>)}
         </div>
