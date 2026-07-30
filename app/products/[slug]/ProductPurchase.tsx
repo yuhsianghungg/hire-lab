@@ -24,7 +24,7 @@ export default function ProductPurchase({ product }: { product: Product }) {
             <img src={product.images[color]} alt={`${product.name}－${product.colorNames[color]}`} />
             <b>hire Lab.</b>
           </div>
-          <div className="detail-swatches" aria-label="商品配色預覽">
+          <div className="detail-swatches" aria-label={product.imageOnlyOptions ? "商品款式圖片" : "商品配色預覽"}>
             {product.images.map((image, index) => <button key={image} className={color === index ? "active" : ""} onClick={() => setColor(index)} aria-label={`選擇${product.colorNames[index]}`}><img src={image} alt="" /></button>)}
           </div>
         </div>
@@ -36,10 +36,10 @@ export default function ProductPurchase({ product }: { product: Product }) {
           <p className="detail-tagline">{product.tagline}</p>
           <p className="detail-description">{product.description}</p>
 
-          <div className="detail-option">
+          {!product.imageOnlyOptions && <div className="detail-option">
             <div><span>選擇顏色</span><b>{product.colorNames[color]}</b></div>
             <div className="color-options">{product.colors.map((swatch, index) => <button key={swatch} className={color === index ? "active" : ""} onClick={() => setColor(index)}><i style={{ background: swatch }} /><span>{product.colorNames[index]}</span></button>)}</div>
-          </div>
+          </div>}
 
           <div className="detail-buy">
             <div className="quantity-control" aria-label="商品數量"><button onClick={() => setQuantity(Math.max(1, quantity - 1))} aria-label="減少數量">−</button><span>{quantity}</span><button onClick={() => setQuantity(quantity + 1)} aria-label="增加數量">＋</button></div>

@@ -10,6 +10,7 @@ export type Product = {
   colors: string[];
   colorNames: string[];
   images: string[];
+  imageOnlyOptions?: boolean;
   tagline: string;
   description: string;
   features: string[];
@@ -71,7 +72,7 @@ export const products: Product[] = [
     type: "腕繩",
     price: 850,
     colors: ["#E8E2D6", "#D9D0B9", "#4A4A4D", "#F0EDE6", "#5B332C", "#232527"],
-    colorNames: ["雪白比熊", "奶油西高地", "黑白貴賓", "白柴犬", "巧克力吉娃娃", "黑貴賓"],
+    colorNames: ["款式 01", "款式 02", "款式 03", "款式 04", "款式 05", "款式 06"],
     images: [
       "/pet-wrist-bichon.jpg",
       "/pet-wrist-westie.jpg",
@@ -80,6 +81,7 @@ export const products: Product[] = [
       "/pet-wrist-chihuahua.jpg",
       "/pet-wrist-black-poodle.jpg",
     ],
+    imageOnlyOptions: true,
     tagline: "把毛孩可愛的模樣，輕輕牽在手邊。",
     description: "以柔軟紗線塑造立體寵物臉龐，再結合手工繞線與蓬鬆花紗，製成輕巧好握的腕繩。每款動物都有不同表情與配色，能掛在手機、相機或隨身小包上。",
     features: ["六款立體寵物造型可選", "柔軟腕繩與蓬鬆花紗手工組合", "單端金屬扣，方便搭配手機、相機與小包"],
