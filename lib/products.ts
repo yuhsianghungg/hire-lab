@@ -65,6 +65,31 @@ export const products: Product[] = [
       { label: "照護方式", value: "建議局部輕柔清潔並自然陰乾，避免拉扯繩結與流蘇" },
     ],
   },
+  {
+    slug: "pet-wrist-strap",
+    name: "寵物腕繩",
+    type: "腕繩",
+    price: 850,
+    colors: ["#E8E2D6", "#D9D0B9", "#4A4A4D", "#F0EDE6", "#5B332C", "#232527"],
+    colorNames: ["雪白比熊", "奶油西高地", "黑白貴賓", "白柴犬", "巧克力吉娃娃", "黑貴賓"],
+    images: [
+      "/pet-wrist-bichon.jpg",
+      "/pet-wrist-westie.jpg",
+      "/pet-wrist-black-white-poodle.jpg",
+      "/pet-wrist-white-shiba.jpg",
+      "/pet-wrist-chihuahua.jpg",
+      "/pet-wrist-black-poodle.jpg",
+    ],
+    tagline: "把毛孩可愛的模樣，輕輕牽在手邊。",
+    description: "以柔軟紗線塑造立體寵物臉龐，再結合手工繞線與蓬鬆花紗，製成輕巧好握的腕繩。每款動物都有不同表情與配色，能掛在手機、相機或隨身小包上。",
+    features: ["六款立體寵物造型可選", "柔軟腕繩與蓬鬆花紗手工組合", "單端金屬扣，方便搭配手機、相機與小包"],
+    specifications: [
+      { label: "款式", value: "短版腕繩，單端金屬扣" },
+      { label: "材質", value: "混合紗線、棉繩、合金五金" },
+      { label: "製作方式", value: "全手工編製與造型" },
+      { label: "照護方式", value: "建議局部輕柔清潔並自然陰乾，避免壓扁或拉扯立體造型" },
+    ],
+  },
 ];
 
 export const formatPrice = (price: number) => `NT$ ${price.toLocaleString("zh-TW")}`;
