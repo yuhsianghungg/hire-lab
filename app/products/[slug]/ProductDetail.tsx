@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { addCartItem } from "@/lib/cart";
 import { formatPrice, type Product } from "@/lib/products";
 
 export default function ProductDetail({ product }: { product: Product }) {
@@ -8,8 +9,9 @@ export default function ProductDetail({ product }: { product: Product }) {
   const [quantity, setQuantity] = useState(1);
   const [notice, setNotice] = useState("");
 
-  const addToBag = () => {
-    setNotice(`${product.name}（${product.colorNames[color]}）× ${quantity} 已加入示範購物袋`);
+  const addToCart = () => {
+    addCartItem({ slug: product.slug, name: product.name, price: product.price, color: product.colors[color], colorName: product.colorNames[color], quantity });
+    setNotice(`${product.name}（${product.colorNames[color]}）× ${quantity} 已加入購物車`);
     window.setTimeout(() => setNotice(""), 2800);
   };
 
@@ -41,9 +43,9 @@ export default function ProductDetail({ product }: { product: Product }) {
 
           <div className="detail-buy">
             <div className="quantity-control" aria-label="商品數量"><button onClick={() => setQuantity(Math.max(1, quantity - 1))} aria-label="減少數量">−</button><span>{quantity}</span><button onClick={() => setQuantity(quantity + 1)} aria-label="增加數量">＋</button></div>
-            <button className="detail-add" onClick={addToBag}>加入購物袋</button>
+            <button className="detail-add" onClick={addToCart}>加入購物車</button>
           </div>
-          <p className="detail-note">此為商品展示與購物袋介面，付款功能將於商城正式上線後開放。</p>
+          <p className="detail-note">此為商品展示與購物車介面，付款功能將於商城正式上線後開放。</p>
         </div>
       </section>
 

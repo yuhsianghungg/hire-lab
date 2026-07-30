@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import CartDrawer from "./CartDrawer";
+import { addCartItem } from "@/lib/cart";
 import { formatPrice, products } from "@/lib/products";
 
 export default function Home() {
@@ -16,15 +18,20 @@ export default function Home() {
     window.setTimeout(() => setNotice(""), 2600);
   };
 
+  const addProduct = (product: (typeof products)[number]) => {
+    addCartItem({ slug: product.slug, name: product.name, price: product.price, color: product.colors[0], colorName: product.colorNames[0], quantity: 1 });
+    showNotice(`${product.name} 已加入購物車`);
+  };
+
   return (
     <main>
       <header className="nav-wrap">
         <a className="brand" href="#top" aria-label="hire Lab. 首頁"><img className="brand-logo" src="/hire-logo.png" alt="hire Lab. 標誌" /> hire Lab.</a>
         <button className="menu-button" aria-label="開啟選單" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "×" : "☰"}</button>
-        <nav className={menuOpen ? "nav open" : "nav"}>
+        <div className="nav-actions"><nav className={menuOpen ? "nav open" : "nav"}>
           <a href="/products">全部商品</a><a href="#custom">客製掛繩</a><a href="#proxy">海外代購</a><a href="#story">品牌故事</a>
           {member ? <a className="nav-cta" href="/member">{member.name} 的帳戶</a> : <a className="nav-cta" href="/login">會員登入</a>}
-        </nav>
+        </nav><CartDrawer /></div>
       </header>
 
       <section className="hero" id="top">
@@ -57,7 +64,7 @@ export default function Home() {
               <span className="product-number">0{index + 1}</span>
             </a>
             <div className="product-info"><div><p>{product.type}</p><h3><a href={`/products/${product.slug}`}>{product.name}</a></h3></div><strong>{formatPrice(product.price)}</strong></div>
-            <button className="add-button" onClick={() => showNotice(`${product.name} 已加入示範購物袋`)}>加入購物袋</button>
+            <button className="add-button" onClick={() => addProduct(product)}>加入購物車</button>
           </article>)}
         </div>
       </section>
