@@ -21,11 +21,11 @@ export default function ProductPurchase({ product }: { product: Product }) {
         <div className="detail-gallery">
           <div className="detail-main-visual">
             <span>HANDMADE / 01</span>
-            <i style={{ background: `linear-gradient(135deg, ${product.colors[color]} 0 36%, ${product.colors[(color + 1) % product.colors.length]} 36% 68%, ${product.colors[(color + 2) % product.colors.length]} 68%)` }} />
+            <img src={product.images[color]} alt={`${product.name}－${product.colorNames[color]}`} />
             <b>hire Lab.</b>
           </div>
           <div className="detail-swatches" aria-label="商品配色預覽">
-            {product.colors.map((swatch, index) => <button key={swatch} className={color === index ? "active" : ""} style={{ background: swatch }} onClick={() => setColor(index)} aria-label={`選擇${product.colorNames[index]}`} />)}
+            {product.images.map((image, index) => <button key={image} className={color === index ? "active" : ""} onClick={() => setColor(index)} aria-label={`選擇${product.colorNames[index]}`}><img src={image} alt="" /></button>)}
           </div>
         </div>
 

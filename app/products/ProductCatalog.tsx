@@ -45,7 +45,7 @@ export default function ProductCatalog() {
               <article className={`catalog-card catalog-card-${productNumber}`} key={product.slug}>
                 <a className="catalog-visual" href={`/products/${product.slug}`} aria-label={`查看 ${product.name}`}>
                   <span className="catalog-number">0{productNumber}</span>
-                  <i style={{ background: `linear-gradient(135deg, ${product.colors[0]} 0 33%, ${product.colors[1]} 33% 66%, ${product.colors[2]} 66%)` }} />
+                  <img src={product.images[0]} alt={`${product.name}－${product.colorNames[0]}`} />
                   <b>VIEW</b>
                 </a>
                 <div className="catalog-info">

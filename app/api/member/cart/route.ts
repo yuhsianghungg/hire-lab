@@ -13,8 +13,23 @@ export async function GET() {
   const cart = await env.DB.prepare("SELECT id,updated_at,status FROM carts WHERE user_id=?").bind(member.id).first<CartRow>();
   if (!cart) return Response.json({ items: [] });
 
-  const { results } = await env.DB.prepare("SELECT item_key AS key,slug,name,price,color,color_name AS colorName,quantity FROM cart_items WHERE cart_id=? ORDER BY rowid").bind(cart.id).all();
-  return Response.json({ items: results, updatedAt: cart.updated_at });
+  const { results } = await env.DB.prepare("SELECT item_key AS key,slug,name,price,color,color_name AS colorName,quantity FROM cart_items WHERE cart_id=? ORDER BY rowid").bind(cart.id).all<IncomingItem>();
+  const items = results.flatMap((item) => {
+    const product = getProduct(String(item.slug || ""));
+    if (!product) return [];
+    const colorIndex = product.colorNames.indexOf(String(item.colorName || ""));
+    const selected = colorIndex >= 0 ? colorIndex : 0;
+    return [{
+      key: `${product.slug}:${product.colorNames[selected]}`,
+      slug: product.slug,
+      name: product.name,
+      price: product.price,
+      color: product.colors[selected],
+      colorName: product.colorNames[selected],
+      quantity: Math.min(99, Math.max(1, Math.trunc(Number(item.quantity) || 1))),
+    }];
+  });
+  return Response.json({ items, updatedAt: cart.updated_at });
 }
 
 export async function PUT(request: Request) {

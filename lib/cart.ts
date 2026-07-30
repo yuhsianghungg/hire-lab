@@ -1,3 +1,5 @@
+import { getProduct } from "./products";
+
 export type CartItem = {
   key: string;
   slug: string;
@@ -15,7 +17,10 @@ export function readCart(): CartItem[] {
   if (typeof window === "undefined") return [];
   try {
     const value = JSON.parse(window.localStorage.getItem(storageKey) || "[]");
-    return Array.isArray(value) ? value : [];
+    if (!Array.isArray(value)) return [];
+    const items = value.filter((item): item is CartItem => Boolean(item?.slug && getProduct(item.slug)));
+    if (items.length !== value.length) window.localStorage.setItem(storageKey, JSON.stringify(items));
+    return items;
   } catch {
     return [];
   }

@@ -57,10 +57,10 @@ export default function Home() {
 
       <section className="section shop" id="shop">
         <div className="section-head"><div><p className="eyebrow">CURATED FOR YOU</p><h2>本週選物</h2></div><a className="text-link" href="/products">查看全部 <span>→</span></a></div>
-        <div className="products">
+        <div className={`products ${products.length === 1 ? "single-product" : ""}`}>
           {products.map((product, index) => <article className={activeProduct === index ? "product active" : "product"} key={product.name}>
             <a className="product-image" href={`/products/${product.slug}`} onMouseEnter={() => setActiveProduct(index)} aria-label={`查看 ${product.name}`}>
-              <div className="product-rope" style={{ background: `linear-gradient(135deg, ${product.colors[0]} 0 33%, ${product.colors[1]} 33% 66%, ${product.colors[2]} 66%)` }}></div>
+              <img src={product.images[0]} alt={`${product.name}－${product.colorNames[0]}`} />
               <span className="product-number">0{index + 1}</span>
             </a>
             <div className="product-info"><div><p>{product.type}</p><h3><a href={`/products/${product.slug}`}>{product.name}</a></h3></div><strong>{formatPrice(product.price)}</strong></div>
