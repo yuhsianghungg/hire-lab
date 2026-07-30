@@ -3,7 +3,7 @@
 
 /* 首頁大標題：桌面與手機版各縮小 3px */
 .hero h1 { font-size: clamp(18px, 2.4vw, 34px) !important; white-space: nowrap; letter-spacing: -1.5px !important; }
-.hero h1 .travel-finds { color: #404370; }
+.hero h1 .travel-finds { color: #f3e7f2; }
 @media (max-width: 760px) { .hero h1 { font-size: clamp(18px, 5.2vw, 22px) !important; } }
 
 :root { --ink:#24322d; --cream:#f6f2e9; --paper:#fffcf6; --coral:#d86659; --yellow:#e7c96f; --sage:#819785; --plum:#786582; }

@@ -34,7 +34,7 @@ export default function Home() {
 
       <section className="hero" id="top">
         <div className="hero-copy">
-          <h1>把日常生活編進生活裡 <em>x</em> <em className="travel-finds">旅行選品</em></h1>
+          <h1>把日常生活編進生活裡<br /><em className="travel-finds">旅行選品</em></h1>
           <p className="hero-text">一條為你而編的掛繩，一件從遠方而來的選物。<br />hire Lab. 讓每次出門，都多一點自己的樣子。</p>
           <div className="hero-actions"><a className="button button-dark" href="#custom">開始客製</a><a className="text-link" href="#shop">逛逛選物 <span>→</span></a></div>
         </div>
