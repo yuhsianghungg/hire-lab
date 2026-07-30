@@ -21,9 +21,13 @@ export function readCart(): CartItem[] {
   }
 }
 
-function saveCart(items: CartItem[]) {
+function saveCart(items: CartItem[], notify = true) {
   window.localStorage.setItem(storageKey, JSON.stringify(items));
-  window.dispatchEvent(new CustomEvent(cartEvent));
+  if (notify) window.dispatchEvent(new CustomEvent(cartEvent));
+}
+
+export function replaceCart(items: CartItem[], notify = true) {
+  saveCart(items, notify);
 }
 
 export function addCartItem(item: Omit<CartItem, "key">) {

@@ -46,3 +46,33 @@ export const auditLogs = sqliteTable("audit_logs", {
   details: text("details"),
   createdAt: text("created_at").notNull(),
 });
+
+export const carts = sqliteTable("carts", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  status: text("status", { enum: ["active", "converted"] }).notNull().default("active"),
+  reminderOptIn: integer("reminder_opt_in", { mode: "boolean" }).notNull().default(false),
+  lastRemindedAt: text("last_reminded_at"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const cartItems = sqliteTable("cart_items", {
+  id: text("id").primaryKey(),
+  cartId: text("cart_id").notNull().references(() => carts.id, { onDelete: "cascade" }),
+  itemKey: text("item_key").notNull(),
+  slug: text("slug").notNull(),
+  name: text("name").notNull(),
+  price: integer("price").notNull(),
+  color: text("color").notNull(),
+  colorName: text("color_name").notNull(),
+  quantity: integer("quantity").notNull(),
+});
+
+export const cartReminders = sqliteTable("cart_reminders", {
+  id: text("id").primaryKey(),
+  cartId: text("cart_id").notNull().references(() => carts.id, { onDelete: "cascade" }),
+  channel: text("channel").notNull().default("in_app"),
+  status: text("status").notNull().default("shown"),
+  createdAt: text("created_at").notNull(),
+});
