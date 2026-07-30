@@ -1,7 +1,11 @@
+export const productCategories = ["長背帶", "腕繩", "吊飾", "眼鏡掛繩"] as const;
+
+export type ProductCategory = (typeof productCategories)[number];
+
 export type Product = {
   slug: string;
   name: string;
-  type: string;
+  type: ProductCategory;
   price: number;
   colors: string[];
   colorNames: string[];
@@ -15,7 +19,7 @@ export const products: Product[] = [
   {
     slug: "sora-phone-lanyard",
     name: "Sora 手機掛繩",
-    type: "手機掛繩",
+    type: "長背帶",
     price: 680,
     colors: ["#E9A98D", "#D76E60", "#F1D8B3"],
     colorNames: ["朝霞粉", "陶土橘", "燕麥米"],
@@ -32,7 +36,7 @@ export const products: Product[] = [
   {
     slug: "nami-camera-wrist-strap",
     name: "Nami 相機手腕繩",
-    type: "相機配件",
+    type: "腕繩",
     price: 880,
     colors: ["#829B87", "#D6C790", "#EFE5D8"],
     colorNames: ["鼠尾草綠", "日光黃", "霧白"],
@@ -49,7 +53,7 @@ export const products: Product[] = [
   {
     slug: "lune-keychain",
     name: "Lune 鑰匙圈",
-    type: "日常配件",
+    type: "吊飾",
     price: 380,
     colors: ["#7F6C9D", "#E7B7C3", "#F2E8DC"],
     colorNames: ["暮色紫", "花瓣粉", "暖沙米"],
