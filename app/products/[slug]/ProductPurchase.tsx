@@ -4,7 +4,7 @@ import { useState } from "react";
 import { addCartItem } from "@/lib/cart";
 import { formatPrice, type Product } from "@/lib/products";
 
-export default function ProductDetail({ product }: { product: Product }) {
+export default function ProductPurchase({ product }: { product: Product }) {
   const [color, setColor] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [notice, setNotice] = useState("");
