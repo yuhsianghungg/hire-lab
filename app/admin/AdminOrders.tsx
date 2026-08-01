@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 
 type Order = { id: string; order_number: string; name: string; email: string; item_summary: string; total: number; status: string; tracking_number?: string };
-type Member = { id: string; name: string; email: string; role: "member" | "operator" | "admin"; status: "active" | "suspended"; created_at: string };
+type Member = { id: string; name: string; email: string; role: "member" | "admin"; status: "active" | "suspended"; created_at: string };
 type TrackedCart = {
   id: string;
   name: string;
@@ -15,9 +15,9 @@ type TrackedCart = {
 };
 
 const statuses = [["pending", "待確認"], ["making", "製作中"], ["shipped", "已出貨"], ["delivered", "已完成"], ["cancelled", "已取消"]];
-const roles = [["member", "一般會員"], ["operator", "訂單管理員"], ["admin", "系統管理員"]];
+const roles = [["member", "一般會員"], ["admin", "系統管理員"]];
 
-export default function AdminOrders({ role }: { role: "operator" | "admin" }) {
+export default function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [carts, setCarts] = useState<TrackedCart[]>([]);
@@ -26,7 +26,7 @@ export default function AdminOrders({ role }: { role: "operator" | "admin" }) {
 
   const loadOrders = () => fetch("/api/admin/orders").then((response) => response.json()).then((data) => data.error ? setNotice(data.error) : setOrders(data.orders || []));
   const loadCarts = () => fetch("/api/admin/carts").then((response) => response.json()).then((data) => data.error ? setNotice(data.error) : setCarts(data.carts || []));
-  const loadMembers = () => { if (role === "admin") fetch("/api/admin/members").then((response) => response.json()).then((data) => data.error ? setNotice(data.error) : setMembers(data.members || [])); };
+  const loadMembers = () => fetch("/api/admin/members").then((response) => response.json()).then((data) => data.error ? setNotice(data.error) : setMembers(data.members || []));
 
   useEffect(() => { loadOrders(); loadCarts(); loadMembers(); }, []);
 
@@ -60,12 +60,12 @@ export default function AdminOrders({ role }: { role: "operator" | "admin" }) {
         <div>
           <button className={section === "orders" ? "active" : ""} onClick={() => setSection("orders")}>訂單管理</button>
           <button className={section === "carts" ? "active" : ""} onClick={() => setSection("carts")}>購物車追蹤</button>
-          {role === "admin" && <button className={section === "members" ? "active" : ""} onClick={() => setSection("members")}>會員權限</button>}
+          <button className={section === "members" ? "active" : ""} onClick={() => setSection("members")}>會員權限</button>
           <a href="/member">會員中心</a>
         </div>
       </header>
       <section>
-        <p className="eyebrow">STUDIO ADMIN · {role.toUpperCase()}</p>
+        <p className="eyebrow">STUDIO ADMIN · ADMIN</p>
         <h1>{title}</h1>
         {notice && <p className="member-notice">{notice}</p>}
 
@@ -99,7 +99,7 @@ export default function AdminOrders({ role }: { role: "operator" | "admin" }) {
           </div>)}
         </article>}
 
-        {section === "members" && role === "admin" && <article className="admin-order-table">
+        {section === "members" && <article className="admin-order-table">
           <h2>會員與角色</h2>
           {members.map((member) => <div className="admin-member-row" key={member.id}><div><b>{member.name}</b><span>{member.email}</span></div><select value={member.role} onChange={(event) => setMembers(members.map((item) => item.id === member.id ? { ...item, role: event.target.value as Member["role"] } : item))}>{roles.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><select value={member.status} onChange={(event) => setMembers(members.map((item) => item.id === member.id ? { ...item, status: event.target.value as Member["status"] } : item))}><option value="active">啟用</option><option value="suspended">停權</option></select><button onClick={() => updateMember(member)}>儲存權限</button></div>)}
         </article>}
