@@ -33,8 +33,39 @@ export const orders = sqliteTable("orders", {
   total: integer("total").notNull(),
   status: text("status").notNull().default("pending"),
   trackingNumber: text("tracking_number"),
+  quoteId: text("quote_id").unique(),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
+});
+
+export const quotes = sqliteTable("quotes", {
+  id: text("id").primaryKey(),
+  quoteNumber: text("quote_number").notNull().unique(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  shippingFee: integer("shipping_fee").notNull().default(0),
+  depositAmount: integer("deposit_amount").notNull().default(0),
+  total: integer("total").notNull(),
+  status: text("status", { enum: ["draft", "sent", "revision_requested", "accepted", "cancelled"] }).notNull().default("draft"),
+  revision: integer("revision").notNull().default(1),
+  expiresAt: text("expires_at"),
+  sentAt: text("sent_at"),
+  acceptedAt: text("accepted_at"),
+  revisionNote: text("revision_note"),
+  orderId: text("order_id").unique(),
+  createdBy: text("created_by").notNull().references(() => users.id),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const quoteItems = sqliteTable("quote_items", {
+  id: text("id").primaryKey(),
+  quoteId: text("quote_id").notNull().references(() => quotes.id, { onDelete: "cascade" }),
+  itemName: text("item_name").notNull(),
+  specifications: text("specifications"),
+  quantity: integer("quantity").notNull(),
+  unitPrice: integer("unit_price").notNull(),
 });
 
 export const auditLogs = sqliteTable("audit_logs", {

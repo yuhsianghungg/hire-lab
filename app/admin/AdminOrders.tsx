@@ -1,6 +1,9 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import AdminQuotes from "./AdminQuotes";
 
 type Order = { id: string; order_number: string; name: string; email: string; item_summary: string; total: number; status: string; tracking_number?: string };
 type Member = { id: string; name: string; email: string; role: "member" | "admin"; status: "active" | "suspended"; created_at: string };
@@ -21,7 +24,7 @@ export default function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [carts, setCarts] = useState<TrackedCart[]>([]);
-  const [section, setSection] = useState<"orders" | "carts" | "members">("orders");
+  const [section, setSection] = useState<"quotes" | "orders" | "carts" | "members">("quotes");
   const [notice, setNotice] = useState("");
 
   const loadOrders = () => fetch("/api/admin/orders").then((response) => response.json()).then((data) => data.error ? setNotice(data.error) : setOrders(data.orders || []));
@@ -51,13 +54,14 @@ export default function AdminOrders() {
     setNotice(response.ok ? "會員權限已更新。" : data.error);
     if (response.ok) loadMembers();
   };
-  const title = section === "orders" ? "訂單管理" : section === "carts" ? "未結帳購物車" : "會員權限";
+  const title = section === "quotes" ? "專屬報價" : section === "orders" ? "訂單管理" : section === "carts" ? "未結帳購物車" : "會員權限";
 
   return (
     <main className="admin-orders">
       <header>
-        <a className="brand" href="/"><img className="brand-logo" src="/hire-logo.png" alt="hire Lab." />hire Lab.</a>
+        <Link className="brand" href="/"><Image className="brand-logo" src="/hire-logo.png" alt="hire Lab." width={40} height={40} />hire Lab.</Link>
         <div>
+          <button className={section === "quotes" ? "active" : ""} onClick={() => setSection("quotes")}>專屬報價</button>
           <button className={section === "orders" ? "active" : ""} onClick={() => setSection("orders")}>訂單管理</button>
           <button className={section === "carts" ? "active" : ""} onClick={() => setSection("carts")}>購物車追蹤</button>
           <button className={section === "members" ? "active" : ""} onClick={() => setSection("members")}>會員權限</button>
@@ -68,6 +72,8 @@ export default function AdminOrders() {
         <p className="eyebrow">STUDIO ADMIN · ADMIN</p>
         <h1>{title}</h1>
         {notice && <p className="member-notice">{notice}</p>}
+
+        {section === "quotes" && <AdminQuotes />}
 
         {section === "orders" && <>
           <p className="admin-orders-lead">建立訂單並更新製作、出貨與物流狀態。</p>

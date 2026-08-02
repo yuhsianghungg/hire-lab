@@ -43,6 +43,13 @@
       "when": 1785542400000,
       "tag": "0005_remove_operator_role",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1785632400000,
+      "tag": "0006_custom_quotes",
+      "breakpoints": true
     }
   ]
 }
