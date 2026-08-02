@@ -21,7 +21,7 @@ type TrackedCart = {
 
 const roles = [["member", "一般會員"], ["admin", "系統管理員"]];
 
-export default function AdminOrders() {
+export default function AdminOrders({ embedded = false }: { embedded?: boolean }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [carts, setCarts] = useState<TrackedCart[]>([]);
@@ -71,19 +71,14 @@ export default function AdminOrders() {
     if (response.ok) loadMembers();
   };
   const title = section === "quotes" ? "專屬報價／客製訂單" : section === "orders" ? "訂單管理" : section === "carts" ? "未結帳購物車" : "會員權限";
+  const navigation = <>
+    <button className={section === "quotes" ? "active" : ""} onClick={() => setSection("quotes")}>客製訂單</button>
+    <button className={section === "orders" ? "active" : ""} onClick={() => { setSection("orders"); void loadOrders(true); }}>訂單管理</button>
+    <button className={section === "carts" ? "active" : ""} onClick={() => setSection("carts")}>購物車追蹤</button>
+    <button className={section === "members" ? "active" : ""} onClick={() => setSection("members")}>會員權限</button>
+  </>;
 
-  return (
-    <main className="admin-orders">
-      <header>
-        <Link className="brand" href="/"><Image className="brand-logo" src="/hire-logo.png" alt="hire Lab." width={40} height={40} />hire Lab.</Link>
-        <div>
-          <button className={section === "quotes" ? "active" : ""} onClick={() => setSection("quotes")}>客製訂單</button>
-          <button className={section === "orders" ? "active" : ""} onClick={() => { setSection("orders"); void loadOrders(true); }}>訂單管理</button>
-          <button className={section === "carts" ? "active" : ""} onClick={() => setSection("carts")}>購物車追蹤</button>
-          <button className={section === "members" ? "active" : ""} onClick={() => setSection("members")}>會員權限</button>
-          <a href="/member">會員中心</a>
-        </div>
-      </header>
+  const workspace = <>
       <section>
         <p className="eyebrow">STUDIO ADMIN · ADMIN</p>
         <h1>{title}</h1>
@@ -126,6 +121,9 @@ export default function AdminOrders() {
           {members.map((member) => <div className="admin-member-row" key={member.id}><div><b>{member.name}</b><span>{member.email}</span></div><select value={member.role} onChange={(event) => setMembers(members.map((item) => item.id === member.id ? { ...item, role: event.target.value as Member["role"] } : item))}>{roles.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><select value={member.status} onChange={(event) => setMembers(members.map((item) => item.id === member.id ? { ...item, status: event.target.value as Member["status"] } : item))}><option value="active">啟用</option><option value="suspended">停權</option></select><button onClick={() => updateMember(member)}>儲存權限</button></div>)}
         </article>}
       </section>
-    </main>
-  );
+  </>;
+
+  if (embedded) return <div className="admin-orders admin-orders-embedded"><nav className="admin-embedded-nav" aria-label="管理後台功能">{navigation}</nav>{workspace}</div>;
+
+  return <main className="admin-orders"><header><Link className="brand" href="/"><Image className="brand-logo" src="/hire-logo.png" alt="hire Lab." width={40} height={40} />hire Lab.</Link><div>{navigation}<a href="/member">會員中心</a></div></header>{workspace}</main>;
 }
