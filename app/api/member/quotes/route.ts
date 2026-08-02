@@ -58,7 +58,7 @@ export async function PATCH(request: Request) {
   const data = body !== null && typeof body === "object" && !Array.isArray(body) ? body as Record<string, unknown> : null;
   const id = String(data?.id || "");
   const action = String(data?.action || "");
-  if (!id || !["accept", "request_revision"].includes(action)) return Response.json({ error: "無效的報價操作。" }, { status: 400 });
+  if (!id || !["accept", "request_revision", "decline"].includes(action)) return Response.json({ error: "無效的報價操作。" }, { status: 400 });
 
   const quote = await env.DB.prepare(
     "SELECT id,quote_number,title,total,status,expires_at,order_id,updated_at FROM quotes WHERE id=? AND user_id=?",
@@ -68,6 +68,13 @@ export async function PATCH(request: Request) {
   if (quote.expires_at && new Date(quote.expires_at).getTime() <= Date.now()) return Response.json({ error: "這份報價已過期，請聯絡我們重新報價。" }, { status: 409 });
 
   const timestamp = new Date().toISOString();
+  if (action === "decline") {
+    const result = await env.DB.prepare("UPDATE quotes SET status='cancelled',updated_at=? WHERE id=? AND user_id=? AND status='sent'")
+      .bind(timestamp, id, member.id).run();
+    if (!result.meta.changes) return Response.json({ error: "報價狀態已更新，請重新整理。" }, { status: 409 });
+    await writeAudit(member.id, "quote.decline", "quote", id, { quoteNumber: quote.quote_number });
+    return Response.json({ ok: true });
+  }
   if (action === "request_revision") {
     const note = String(data?.note || "").trim();
     if (note.length < 2) return Response.json({ error: "請填寫希望修改的內容。" }, { status: 400 });
