@@ -90,7 +90,7 @@ export default function MemberDashboard({ member }: { member: Member }) {
   return <main className="member-center">
     <header className="member-header"><Link className="brand" href="/"><Image className="brand-logo" src="/hire-logo.png" alt="hire Lab." width={40} height={40} />hire Lab.</Link><div>{member.role === "admin" && <Link href="/admin">管理後台</Link>}<Link href="/">回到首頁</Link><button type="button" onClick={logout}>登出</button></div></header>
     <nav className="member-tabs">{tabs.map(([key, label]) => <button type="button" key={key} className={tab === key ? "active" : ""} onClick={() => { setTab(key); if (key === "transactions") void loadOrders(); }}>{label}</button>)}</nav>
-    <section className="member-intro"><div><p className="eyebrow">MY ACCOUNT</p><h1>你好，{member.name}</h1><p>管理個人資訊、專屬報價與訂單進度。</p></div></section>
+    <section className="member-intro"><div><p className="eyebrow">MY ACCOUNT</p><h1>你好，{member.name}</h1><p>{tab === "profile" ? "管理個人資訊。" : "管理專屬報價與訂單進度。"}</p></div></section>
     {notice && <p className="member-notice member-page-notice">{notice}</p>}
     {tab === "profile" && <section className="member-grid">
       <article className="member-panel"><p className="eyebrow">PROFILE</p><h2>個人資訊</h2><form className="member-profile-form" onSubmit={saveProfile}>
