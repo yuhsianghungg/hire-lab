@@ -4,11 +4,12 @@ import { FormEvent, useCallback, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import MemberQuotes from "./MemberQuotes";
+import OrderProgress from "@/app/components/OrderProgress";
+import { orderStatusLabels, type OrderStatus } from "@/lib/order-workflow";
 
 type Member = { id: string; name: string; email: string; role: string };
-type Order = { order_number: string; item_summary: string; total: number; status: string; tracking_number?: string; created_at: string };
+type Order = { order_number: string; item_summary: string; total: number; status: OrderStatus; tracking_number?: string; created_at: string; history: { status: string; created_at: string }[] };
 const tabs = [["profile", "個人資訊"], ["transactions", "報價與訂單"]] as const;
-const labels: Record<string, string> = { pending: "待確認", making: "製作中", shipped: "已出貨", delivered: "已完成", cancelled: "已取消" };
 
 export default function MemberDashboard({ member }: { member: Member }) {
   const [tab, setTab] = useState<(typeof tabs)[number][0]>("profile");
@@ -80,7 +81,14 @@ export default function MemberDashboard({ member }: { member: Member }) {
     </section>}
     {tab === "transactions" && <div className="member-business">
       <MemberQuotes onOrderCreated={() => void loadOrders()} onOpenOrders={() => document.getElementById("member-orders")?.scrollIntoView({ behavior: "smooth" })} />
-      <section className="member-panel member-orders" id="member-orders"><div className="member-panel-head"><div><p className="eyebrow">ORDERS</p><h2>訂單狀況</h2></div><span>製作進度</span></div>{loadingOrders ? <p>讀取訂單中…</p> : orders.length === 0 ? <p className="member-muted">接受專屬報價後，正式訂單與製作進度會顯示在這裡。</p> : <div className="member-order-list">{orders.map((order) => <article key={order.order_number}><div><b>{order.order_number}</b><span>{order.item_summary}</span><small>{new Date(order.created_at).toLocaleDateString("zh-TW")}</small></div><div><strong>NT$ {order.total.toLocaleString()}</strong><i className={`status ${order.status}`}>{labels[order.status] || order.status}</i>{order.tracking_number && <small>物流：{order.tracking_number}</small>}</div></article>)}</div>}</section>
+      <section className="member-panel member-orders" id="member-orders">
+        <div className="member-panel-head"><div><p className="eyebrow">ORDER PROGRESS</p><h2>訂單製作進度</h2></div><span>即時流程</span></div>
+        {loadingOrders ? <p>讀取訂單中…</p> : orders.length === 0 ? <p className="member-muted">確認客製訂單後，正式訂單與製作進度會顯示在這裡。</p> : <div className="member-order-list">{orders.map((order) => <article className="member-order-card" key={order.order_number}>
+          <header><div><b>{order.order_number}</b><span>{order.item_summary}</span><small>建立日期：{new Date(order.created_at).toLocaleDateString("zh-TW")}</small></div><div><strong>NT$ {order.total.toLocaleString()}</strong><i className={`status ${order.status}`}>{orderStatusLabels[order.status]}</i></div></header>
+          <OrderProgress status={order.status} history={order.history} />
+          {order.tracking_number && <p className="member-tracking"><span>物流單號</span><b>{order.tracking_number}</b></p>}
+        </article>)}</div>}
+      </section>
     </div>}
   </main>;
 }

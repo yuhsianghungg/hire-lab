@@ -1,11 +1,13 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import AdminQuotes from "./AdminQuotes";
+import OrderProgress from "@/app/components/OrderProgress";
+import { nextOrderActionLabels, nextOrderStatus, orderStatusLabels, type OrderStatus } from "@/lib/order-workflow";
 
-type Order = { id: string; order_number: string; name: string; email: string; item_summary: string; total: number; status: string; tracking_number?: string };
+type Order = { id: string; order_number: string; name: string; email: string; item_summary: string; total: number; status: OrderStatus; tracking_number?: string; history: { status: string; created_at: string }[] };
 type Member = { id: string; name: string; email: string; role: "member" | "admin"; status: "active" | "suspended"; created_at: string };
 type TrackedCart = {
   id: string;
@@ -17,7 +19,6 @@ type TrackedCart = {
   items: { name: string; color_name: string; quantity: number; price: number }[];
 };
 
-const statuses = [["pending", "待確認"], ["making", "製作中"], ["shipped", "已出貨"], ["delivered", "已完成"], ["cancelled", "已取消"]];
 const roles = [["member", "一般會員"], ["admin", "系統管理員"]];
 
 export default function AdminOrders() {
@@ -26,6 +27,7 @@ export default function AdminOrders() {
   const [carts, setCarts] = useState<TrackedCart[]>([]);
   const [section, setSection] = useState<"quotes" | "orders" | "carts" | "members">("quotes");
   const [notice, setNotice] = useState("");
+  const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
 
   const loadOrders = () => fetch("/api/admin/orders").then((response) => response.json()).then((data) => data.error ? setNotice(data.error) : setOrders(data.orders || []));
   const loadCarts = () => fetch("/api/admin/carts").then((response) => response.json()).then((data) => data.error ? setNotice(data.error) : setCarts(data.carts || []));
@@ -33,20 +35,16 @@ export default function AdminOrders() {
 
   useEffect(() => { loadOrders(); loadCarts(); loadMembers(); }, []);
 
-  const create = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formElement = event.currentTarget;
-    const form = new FormData(formElement);
-    const response = await fetch("/api/admin/orders", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(Object.fromEntries(form)) });
-    const data = await response.json();
-    setNotice(response.ok ? "訂單已建立。" : data.error);
-    if (response.ok) { formElement.reset(); loadOrders(); loadCarts(); }
-  };
-  const updateOrder = async (order: Order) => {
-    const response = await fetch("/api/admin/orders", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: order.id, status: order.status, trackingNumber: order.tracking_number }) });
-    const data = await response.json();
-    setNotice(response.ok ? "訂單已更新。" : data.error);
-    if (response.ok) { loadOrders(); loadCarts(); }
+  const updateOrder = async (order: Order, status: OrderStatus = order.status) => {
+    if (status === "cancelled" && !window.confirm(`確定取消訂單 ${order.order_number}？`)) return;
+    setUpdatingOrder(order.id);
+    try {
+      const response = await fetch("/api/admin/orders", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: order.id, status, trackingNumber: order.tracking_number }) });
+      const data = await response.json().catch(() => ({})) as { error?: string };
+      setNotice(response.ok ? status === order.status ? "物流資料已儲存。" : `訂單已更新為「${orderStatusLabels[status]}」。` : data.error || "目前無法更新訂單。");
+      if (response.ok) { await loadOrders(); await loadCarts(); }
+    } catch { setNotice("目前無法連線，請稍後再試。"); }
+    finally { setUpdatingOrder(null); }
   };
   const updateMember = async (member: Member) => {
     const response = await fetch("/api/admin/members", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: member.id, role: member.role, status: member.status }) });
@@ -54,14 +52,14 @@ export default function AdminOrders() {
     setNotice(response.ok ? "會員權限已更新。" : data.error);
     if (response.ok) loadMembers();
   };
-  const title = section === "quotes" ? "專屬報價" : section === "orders" ? "訂單管理" : section === "carts" ? "未結帳購物車" : "會員權限";
+  const title = section === "quotes" ? "專屬報價／客製訂單" : section === "orders" ? "訂單管理" : section === "carts" ? "未結帳購物車" : "會員權限";
 
   return (
     <main className="admin-orders">
       <header>
         <Link className="brand" href="/"><Image className="brand-logo" src="/hire-logo.png" alt="hire Lab." width={40} height={40} />hire Lab.</Link>
         <div>
-          <button className={section === "quotes" ? "active" : ""} onClick={() => setSection("quotes")}>專屬報價</button>
+          <button className={section === "quotes" ? "active" : ""} onClick={() => setSection("quotes")}>客製訂單</button>
           <button className={section === "orders" ? "active" : ""} onClick={() => setSection("orders")}>訂單管理</button>
           <button className={section === "carts" ? "active" : ""} onClick={() => setSection("carts")}>購物車追蹤</button>
           <button className={section === "members" ? "active" : ""} onClick={() => setSection("members")}>會員權限</button>
@@ -76,21 +74,20 @@ export default function AdminOrders() {
         {section === "quotes" && <AdminQuotes />}
 
         {section === "orders" && <>
-          <p className="admin-orders-lead">建立訂單並更新製作、出貨與物流狀態。</p>
-          <article className="admin-order-create">
-            <h2>建立訂單</h2>
-            <form onSubmit={create}>
-              <input name="email" type="email" placeholder="會員 Email" required />
-              <input name="itemSummary" placeholder="商品或服務內容" required />
-              <input name="total" type="number" min="0" placeholder="訂單金額" required />
-              <select name="status">{statuses.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
-              <input name="trackingNumber" placeholder="物流單號（選填）" />
-              <button className="button button-dark">建立訂單</button>
-            </form>
-          </article>
+          <p className="admin-orders-lead">客戶確認客製訂單後，正式訂單才會出現在這裡。請依序更新製作與配送進度。</p>
           <article className="admin-order-table">
-            <h2>全部訂單</h2>
-            {orders.length === 0 ? <p>目前尚未建立訂單。</p> : orders.map((order) => <div className="admin-order-row" key={order.id}><div><b>{order.order_number}</b><span>{order.name} · {order.email}</span><small>{order.item_summary} · NT$ {order.total.toLocaleString()}</small></div><select value={order.status} onChange={(event) => setOrders(orders.map((item) => item.id === order.id ? { ...item, status: event.target.value } : item))}>{statuses.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><input value={order.tracking_number || ""} placeholder="物流單號" onChange={(event) => setOrders(orders.map((item) => item.id === order.id ? { ...item, tracking_number: event.target.value } : item))} /><button onClick={() => updateOrder(order)}>儲存</button></div>)}
+            <h2>正式訂單與製作流程</h2>
+            {orders.length === 0 ? <p>目前尚未有客戶確認完成的訂單。</p> : orders.map((order) => {
+              const next = nextOrderStatus[order.status];
+              return <section className="admin-order-workflow" key={order.id}>
+                <header><div><b>{order.order_number}</b><span>{order.name} · {order.email}</span><small>{order.item_summary}</small></div><div><strong>NT$ {order.total.toLocaleString()}</strong><i className={`status ${order.status}`}>{orderStatusLabels[order.status]}</i></div></header>
+                <OrderProgress status={order.status} history={order.history} />
+                <footer>
+                  <label>物流單號<input value={order.tracking_number || ""} placeholder="進入運送階段時填寫" onChange={(event) => setOrders(orders.map((item) => item.id === order.id ? { ...item, tracking_number: event.target.value } : item))} /></label>
+                  <div><button type="button" disabled={updatingOrder === order.id} onClick={() => void updateOrder(order)}>儲存物流資料</button>{next && <button type="button" className="primary" disabled={updatingOrder === order.id} onClick={() => void updateOrder(order, next)}>{updatingOrder === order.id ? "更新中…" : nextOrderActionLabels[order.status]}</button>}{(order.status === "pending" || order.status === "making") && <button type="button" className="danger" disabled={updatingOrder === order.id} onClick={() => void updateOrder(order, "cancelled")}>取消訂單</button>}</div>
+                </footer>
+              </section>;
+            })}
           </article>
         </>}
 

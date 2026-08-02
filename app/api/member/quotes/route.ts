@@ -97,6 +97,8 @@ export async function PATCH(request: Request) {
         .bind(orderId, orderNumber, itemSummary, timestamp, timestamp, id, member.id, quote.updated_at, timestamp),
       env.DB.prepare("UPDATE quotes SET status='accepted',accepted_at=?,order_id=?,updated_at=? WHERE id=? AND user_id=? AND status='sent' AND EXISTS (SELECT 1 FROM orders WHERE orders.id=? AND orders.quote_id=quotes.id)")
         .bind(timestamp, orderId, timestamp, id, member.id, orderId),
+      env.DB.prepare("INSERT INTO order_status_history (id,order_id,status,created_by,note,created_at) SELECT ?,id,'pending',?,'客戶確認訂單',? FROM orders WHERE id=? AND quote_id=?")
+        .bind(crypto.randomUUID(), member.id, timestamp, orderId, id),
     ]);
   } catch {
     return Response.json({ error: "報價可能已被接受，請重新整理確認。" }, { status: 409 });

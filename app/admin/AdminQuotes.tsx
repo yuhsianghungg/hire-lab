@@ -47,7 +47,7 @@ type FormState = {
 
 const emptyItem = (): FormItem => ({ itemName: "", specifications: "", quantity: 1, unitPrice: 0 });
 const emptyForm = (): FormState => ({ email: "", title: "", description: "", shippingFee: 0, depositAmount: 0, status: "draft", expiresAt: "", items: [emptyItem()] });
-const labels: Record<string, string> = { draft: "草稿", sent: "待會員確認", revision_requested: "會員要求修改", accepted: "已接受／已轉訂單", cancelled: "已取消" };
+const labels: Record<string, string> = { draft: "店家編輯中", sent: "待客戶確認", revision_requested: "客戶要求修改", accepted: "客戶已確認／訂單成立", cancelled: "已取消" };
 
 async function responseData(response: Response) {
   return response.json().catch(() => ({})) as Promise<{ error?: string; quotes?: Quote[] }>;
@@ -119,7 +119,7 @@ export default function AdminQuotes() {
       const data = await responseData(response);
       if (!response.ok) setNotice(data.error || "目前無法儲存報價單。");
       else {
-        setNotice(editingId ? "報價已更新，版本已遞增。" : form.status === "sent" ? "報價已建立並送至會員中心。" : "報價草稿已建立。");
+        setNotice(editingId ? "客製訂單內容已更新，版本已遞增。" : form.status === "sent" ? "客製訂單已建立並送至會員中心等待確認。" : "客製訂單草稿已建立。");
         reset();
         await load();
       }
@@ -138,13 +138,19 @@ export default function AdminQuotes() {
   };
 
   return <div className="quote-admin">
-    <p className="admin-orders-lead">先依客製需求建立私人報價；會員接受後，系統會鎖定金額並自動建立正式訂單。</p>
+    <p className="admin-orders-lead">先完成需求討論，再由店家建立專屬報價／客製訂單；客戶確認後，系統才會鎖定內容並建立正式訂單。</p>
+    <ol className="custom-order-overview" aria-label="客製訂單建立流程">
+      <li className="complete"><span>1</span><div><b>店家與客戶討論</b><small>確認款式、規格與交期</small></div></li>
+      <li className="current"><span>2</span><div><b>店家建立訂單</b><small>建立內容與專屬報價</small></div></li>
+      <li><span>3</span><div><b>客戶確認訂單</b><small>確認或提出修改需求</small></div></li>
+      <li><span>4</span><div><b>訂單建立完成</b><small>鎖定內容並進入製作</small></div></li>
+    </ol>
     {notice && <p className="member-notice quote-notice" role="status">{notice}</p>}
     <article className="admin-order-create quote-editor" id="quote-editor">
-      <div className="quote-editor-head"><div><p className="eyebrow">PRIVATE QUOTE</p><h2>{editingId ? "編輯專屬報價" : "建立專屬報價"}</h2></div>{editingId && <button type="button" onClick={reset}>取消編輯</button>}</div>
+      <div className="quote-editor-head"><div><p className="eyebrow">CUSTOM ORDER</p><h2>{editingId ? "編輯客製訂單" : "建立客製訂單"}</h2></div>{editingId && <button type="button" onClick={reset}>取消編輯</button>}</div>
       <form onSubmit={submit}>
         <label>會員 Email<input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required /></label>
-        <label>報價名稱<input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="例：王小姐客製長背帶" required /></label>
+        <label>客製訂單名稱<input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="例：王小姐客製長背帶" required /></label>
         <label>有效期限<input type="date" value={form.expiresAt} onChange={(event) => setForm({ ...form, expiresAt: event.target.value })} /></label>
         <label className="quote-wide">整體說明<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} placeholder="記錄材質、配色、交期與討論重點" rows={3} /></label>
         <div className="quote-items quote-wide">
@@ -159,14 +165,14 @@ export default function AdminQuotes() {
         </div>
         <label>運費<input type="number" min="0" value={form.shippingFee} onChange={(event) => setForm({ ...form, shippingFee: Number(event.target.value) })} /></label>
         <label>訂金<input type="number" min="0" max={total} value={form.depositAmount} onChange={(event) => setForm({ ...form, depositAmount: Number(event.target.value) })} /></label>
-        <label>報價狀態<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as FormState["status"] })}><option value="draft">儲存草稿</option><option value="sent">送至會員中心</option><option value="cancelled">取消報價</option></select></label>
+        <label>訂單確認狀態<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as FormState["status"] })}><option value="draft">儲存草稿</option><option value="sent">送出等待客戶確認</option><option value="cancelled">取消客製訂單</option></select></label>
         <div className="quote-total quote-wide"><span>報價總額（系統計算）</span><strong>NT$ {total.toLocaleString()}</strong></div>
-        <button className="button button-dark" disabled={saving}>{saving ? "儲存中…" : editingId ? "儲存新版報價" : "建立報價"}</button>
+        <button className="button button-dark" disabled={saving}>{saving ? "儲存中…" : editingId ? "儲存新版內容" : form.status === "sent" ? "建立並送出確認" : "建立草稿"}</button>
       </form>
     </article>
     <article className="admin-order-table quote-list">
-      <h2>全部專屬報價</h2>
-      {quotes.length === 0 ? <p>目前尚未建立專屬報價。</p> : quotes.map((quote) => <section className="quote-admin-card" key={quote.id}>
+      <h2>全部客製訂單</h2>
+      {quotes.length === 0 ? <p>目前尚未建立客製訂單。</p> : quotes.map((quote) => <section className="quote-admin-card" key={quote.id}>
         <div className="quote-admin-summary"><div><b>{quote.quote_number}</b><h3>{quote.title}</h3><span>{quote.name} · {quote.email}</span></div><div><i className={`quote-status ${quote.status}`}>{labels[quote.status] || quote.status}</i><strong>NT$ {quote.total.toLocaleString()}</strong><small>第 {quote.revision} 版</small></div></div>
         <div className="quote-admin-items">{quote.items.map((item) => <span key={item.id}>{item.item_name} × {item.quantity}／NT$ {((item.unit_price || 0) * item.quantity).toLocaleString()}{item.specifications ? ` · ${item.specifications}` : ""}</span>)}</div>
         {quote.revision_note && <p className="quote-revision-note"><b>會員修改需求</b>{quote.revision_note}</p>}

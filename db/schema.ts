@@ -38,6 +38,15 @@ export const orders = sqliteTable("orders", {
   updatedAt: text("updated_at").notNull(),
 });
 
+export const orderStatusHistory = sqliteTable("order_status_history", {
+  id: text("id").primaryKey(),
+  orderId: text("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  status: text("status").notNull(),
+  createdBy: text("created_by").notNull().references(() => users.id),
+  note: text("note"),
+  createdAt: text("created_at").notNull(),
+});
+
 export const quotes = sqliteTable("quotes", {
   id: text("id").primaryKey(),
   quoteNumber: text("quote_number").notNull().unique(),
