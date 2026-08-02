@@ -3,13 +3,10 @@
 import { FormEvent, useCallback, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import MemberQuotes from "./MemberQuotes";
-import OrderProgress from "@/app/components/OrderProgress";
-import { orderStatusLabels, type OrderStatus } from "@/lib/order-workflow";
+import MemberQuotes, { type MemberOrder } from "./MemberQuotes";
 import { countryCallingCodes, genderOptions } from "@/lib/member-profile";
 
 type Member = { id: string; name: string; email: string; phone_country_code: string | null; phone_number: string | null; gender: string | null; birthday: string | null; role: string };
-type Order = { order_number: string; item_summary: string; total: number; status: OrderStatus; tracking_number?: string; created_at: string; history: { status: string; created_at: string }[] };
 const tabs = [["profile", "個人資訊"], ["transactions", "報價與訂單"]] as const;
 const birthYears = Array.from({ length: new Date().getFullYear() - 1899 }, (_, index) => String(new Date().getFullYear() - index));
 const birthMonths = Array.from({ length: 12 }, (_, index) => String(index + 1).padStart(2, "0"));
@@ -27,7 +24,7 @@ export default function MemberDashboard({ member }: { member: Member }) {
   const [birthDay, setBirthDay] = useState(member.birthday?.slice(8, 10) || "");
   const [notice, setNotice] = useState("");
   const [passwordNotice, setPasswordNotice] = useState("");
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<MemberOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
@@ -105,15 +102,7 @@ export default function MemberDashboard({ member }: { member: Member }) {
       <article className="member-panel"><p className="eyebrow">SECURITY</p><h2>修改密碼</h2><form className="member-profile-form" onSubmit={changePassword}><label>目前密碼<input name="currentPassword" type="password" required /></label><label>新密碼<input name="newPassword" type="password" minLength={8} required /></label><label>再次輸入新密碼<input name="confirmPassword" type="password" minLength={8} required /></label>{passwordNotice && <p className="member-notice" role="status">{passwordNotice}</p>}<button className="button button-dark" disabled={savingPassword}>{savingPassword ? "更新中…" : "更新密碼"}</button></form></article>
     </section>}
     {tab === "transactions" && <div className="member-business">
-      <MemberQuotes onOrderCreated={() => void loadOrders()} onOpenOrders={() => document.getElementById("member-orders")?.scrollIntoView({ behavior: "smooth" })} />
-      <section className="member-panel member-orders" id="member-orders">
-        <div className="member-panel-head"><div><p className="eyebrow">ORDER PROGRESS</p><h2>訂單製作進度</h2></div><span>即時流程</span></div>
-        {loadingOrders ? <p>讀取訂單中…</p> : orders.length === 0 ? <p className="member-muted">確認客製訂單後，正式訂單與製作進度會顯示在這裡。</p> : <div className="member-order-list">{orders.map((order) => <article className="member-order-card" key={order.order_number}>
-          <header><div><b>{order.order_number}</b><span>{order.item_summary}</span><small>建立日期：{new Date(order.created_at).toLocaleDateString("zh-TW")}</small></div><div><strong>NT$ {order.total.toLocaleString()}</strong><i className={`status ${order.status}`}>{orderStatusLabels[order.status]}</i></div></header>
-          <OrderProgress status={order.status} history={order.history} />
-          {order.tracking_number && <p className="member-tracking"><span>物流單號</span><b>{order.tracking_number}</b></p>}
-        </article>)}</div>}
-      </section>
+      <MemberQuotes orders={orders} loadingOrders={loadingOrders} onOrderCreated={() => void loadOrders()} />
     </div>}
   </main>;
 }
