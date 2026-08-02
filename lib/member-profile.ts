@@ -17,8 +17,8 @@ export const countryCallingCodes = [
 ] as const;
 
 export const genderOptions = [
-  { value: "female", label: "女" },
   { value: "male", label: "男" },
+  { value: "female", label: "女" },
   { value: "non_binary", label: "非二元／其他" },
   { value: "prefer_not_to_say", label: "不透露" },
 ] as const;
