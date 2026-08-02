@@ -1,7 +1,32 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import QuoteConfirmationProgress from "@/app/components/QuoteConfirmationProgress";
+import CustomOrderProgress from "@/app/components/CustomOrderProgress";
+import OrderProgress from "@/app/components/OrderProgress";
+import { nextOrderActionLabels, nextOrderStatus, orderStatusLabels, type OrderStatus } from "@/lib/order-workflow";
+
+export type AdminOrderRecord = {
+  id: string;
+  order_number: string;
+  name: string;
+  email: string;
+  item_summary: string;
+  total: number;
+  status: OrderStatus;
+  tracking_number?: string | null;
+  quote_id: string | null;
+  history: { status: string; created_at: string }[];
+};
+
+type AdminQuotesProps = {
+  orders: AdminOrderRecord[];
+  updatingOrder: string | null;
+  refreshingOrders: boolean;
+  lastOrdersSyncedAt: Date | null;
+  onRefreshOrders: () => Promise<void>;
+  onUpdateOrder: (order: AdminOrderRecord, status?: OrderStatus) => Promise<void>;
+  onTrackingChange: (id: string, trackingNumber: string) => void;
+};
 
 type QuoteItem = {
   id?: string;
@@ -54,7 +79,25 @@ async function responseData(response: Response) {
   return response.json().catch(() => ({})) as Promise<{ error?: string; quotes?: Quote[] }>;
 }
 
-export default function AdminQuotes() {
+function ProductionWorkflow({ order, updatingOrder, showProgress, onUpdateOrder, onTrackingChange }: {
+  order: AdminOrderRecord;
+  updatingOrder: string | null;
+  showProgress: boolean;
+  onUpdateOrder: AdminQuotesProps["onUpdateOrder"];
+  onTrackingChange: AdminQuotesProps["onTrackingChange"];
+}) {
+  const next = nextOrderStatus[order.status];
+  return <section className={`admin-order-workflow ${showProgress ? "" : "quote-linked-workflow"}`}>
+    <header><div><b>{showProgress ? order.order_number : "製作與配送操作"}</b><span>{showProgress ? `${order.name} · ${order.email}` : `正式訂單 ${order.order_number}`}</span><small>{order.item_summary}</small></div><div><strong>NT$ {order.total.toLocaleString()}</strong><i className={`status ${order.status}`}>{orderStatusLabels[order.status]}</i></div></header>
+    {showProgress && <OrderProgress status={order.status} history={order.history} />}
+    <footer>
+      <label>物流單號<input value={order.tracking_number || ""} placeholder="進入運送階段時填寫" onChange={(event) => onTrackingChange(order.id, event.target.value)} /></label>
+      <div><button type="button" disabled={updatingOrder === order.id} onClick={() => void onUpdateOrder(order)}>儲存物流資料</button>{next && <button type="button" className="primary" disabled={updatingOrder === order.id} onClick={() => void onUpdateOrder(order, next)}>{updatingOrder === order.id ? "更新中…" : nextOrderActionLabels[order.status]}</button>}{(order.status === "pending" || order.status === "making") && <button type="button" className="danger" disabled={updatingOrder === order.id} onClick={() => void onUpdateOrder(order, "cancelled")}>取消訂單</button>}</div>
+    </footer>
+  </section>;
+}
+
+export default function AdminQuotes({ orders, updatingOrder, refreshingOrders, lastOrdersSyncedAt, onRefreshOrders, onUpdateOrder, onTrackingChange }: AdminQuotesProps) {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -63,6 +106,9 @@ export default function AdminQuotes() {
   const [refreshing, setRefreshing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const total = useMemo(() => form.items.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.unitPrice || 0), 0) + Number(form.shippingFee || 0), [form.items, form.shippingFee]);
+  const ordersByQuote = useMemo(() => new Map(orders.filter((order) => order.quote_id).map((order) => [order.quote_id as string, order])), [orders]);
+  const quoteIds = useMemo(() => new Set(quotes.map((quote) => quote.id)), [quotes]);
+  const standaloneOrders = useMemo(() => orders.filter((order) => !order.quote_id || !quoteIds.has(order.quote_id)), [orders, quoteIds]);
 
   const load = useCallback(async (quiet = false) => {
     if (quiet) setRefreshing(true);
@@ -139,8 +185,8 @@ export default function AdminQuotes() {
   };
 
   return <div className="quote-admin">
-    <div className="admin-sync-bar"><span>{lastSyncedAt ? `前後台同步於 ${lastSyncedAt.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "正在同步客製訂單…"}</span><button type="button" disabled={refreshing} onClick={() => void load(true)}>{refreshing ? "同步中…" : "重新同步"}</button></div>
-    <p className="admin-orders-lead">先完成需求討論，再由店家建立專屬報價／客製訂單；客戶確認後，系統才會鎖定內容並建立正式訂單。</p>
+    <div className="admin-sync-bar"><span>{lastSyncedAt || lastOrdersSyncedAt ? `全部訂單與製作流程同步於 ${(lastSyncedAt || lastOrdersSyncedAt)?.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "正在同步全部訂單與製作流程…"}</span><button type="button" disabled={refreshing || refreshingOrders} onClick={() => { void load(true); void onRefreshOrders(); }}>{refreshing || refreshingOrders ? "同步中…" : "重新同步"}</button></div>
+    <p className="admin-orders-lead">客製訂單已納入訂單管理；店家建立、客戶確認、製作、運送到完成，皆在同一筆訂單內查看與更新。</p>
     {notice && <p className="member-notice quote-notice" role="status">{notice}</p>}
     <article className="admin-order-create quote-editor" id="quote-editor">
       <div className="quote-editor-head"><div><p className="eyebrow">CUSTOM ORDER</p><h2>{editingId ? "編輯客製訂單" : "建立客製訂單"}</h2></div>{editingId && <button type="button" onClick={reset}>取消編輯</button>}</div>
@@ -167,14 +213,23 @@ export default function AdminQuotes() {
       </form>
     </article>
     <article className="admin-order-table quote-list">
-      <h2>全部客製訂單</h2>
-      {quotes.length === 0 ? <p>目前尚未建立客製訂單。</p> : quotes.map((quote) => <section className="quote-admin-card" key={quote.id}>
-        <div className="quote-admin-summary"><div><b>{quote.quote_number}</b><h3>{quote.title}</h3><span>{quote.name} · {quote.email}</span></div><div><i className={`quote-status ${quote.status}`}>{labels[quote.status] || quote.status}</i><strong>NT$ {quote.total.toLocaleString()}</strong><small>第 {quote.revision} 版</small></div></div>
-        <QuoteConfirmationProgress status={quote.status} hasOrder={Boolean(quote.order_id)} />
-        <div className="quote-admin-items">{quote.items.map((item) => <span key={item.id}>{item.item_name} × {item.quantity}／NT$ {((item.unit_price || 0) * item.quantity).toLocaleString()}{item.specifications ? ` · ${item.specifications}` : ""}</span>)}</div>
-        {quote.revision_note && <p className="quote-revision-note"><b>會員修改需求</b>{quote.revision_note}</p>}
-        <footer><small>{quote.expires_at ? `有效至 ${new Date(quote.expires_at).toLocaleDateString("zh-TW")}` : "未設定有效期限"}</small><div>{quote.status !== "accepted" && <button type="button" onClick={() => edit(quote)}>{quote.status === "revision_requested" ? "修改並重新送出" : "編輯"}</button>}{quote.status === "draft" && <button type="button" className="danger" onClick={() => void remove(quote)}>刪除草稿</button>}</div></footer>
-      </section>)}
+      <h2>全部客製訂單與製作流程</h2>
+      {quotes.length === 0 ? <p>目前尚未建立客製訂單。</p> : quotes.map((quote) => {
+        const linkedOrder = ordersByQuote.get(quote.id) || (quote.order_id ? orders.find((order) => order.id === quote.order_id) : undefined);
+        return <section className="quote-admin-card unified-custom-order" key={quote.id}>
+          <div className="quote-admin-summary"><div><b>{quote.quote_number}</b><h3>{quote.title}</h3><span>{quote.name} · {quote.email}</span></div><div><i className={`quote-status ${quote.status}`}>{labels[quote.status] || quote.status}</i><strong>NT$ {quote.total.toLocaleString()}</strong><small>第 {quote.revision} 版</small></div></div>
+          <CustomOrderProgress quoteStatus={quote.status} orderStatus={linkedOrder?.status} />
+          <div className="quote-admin-items">{quote.items.map((item) => <span key={item.id}>{item.item_name} × {item.quantity}／NT$ {((item.unit_price || 0) * item.quantity).toLocaleString()}{item.specifications ? ` · ${item.specifications}` : ""}</span>)}</div>
+          {quote.revision_note && <p className="quote-revision-note"><b>會員修改需求</b>{quote.revision_note}</p>}
+          {quote.status === "accepted" && !linkedOrder && <p className="quote-order-syncing">客戶已確認，正在同步正式訂單與製作流程。</p>}
+          {linkedOrder && <ProductionWorkflow order={linkedOrder} updatingOrder={updatingOrder} showProgress={false} onUpdateOrder={onUpdateOrder} onTrackingChange={onTrackingChange} />}
+          <footer><small>{quote.expires_at ? `有效至 ${new Date(quote.expires_at).toLocaleDateString("zh-TW")}` : "未設定有效期限"}</small><div>{quote.status !== "accepted" && <button type="button" onClick={() => edit(quote)}>{quote.status === "revision_requested" ? "修改並重新送出" : "編輯"}</button>}{quote.status === "draft" && <button type="button" className="danger" onClick={() => void remove(quote)}>刪除草稿</button>}</div></footer>
+        </section>;
+      })}
     </article>
+    {standaloneOrders.length > 0 && <article className="admin-order-table quote-list">
+      <h2>其他正式訂單</h2>
+      {standaloneOrders.map((order) => <ProductionWorkflow key={order.id} order={order} updatingOrder={updatingOrder} showProgress onUpdateOrder={onUpdateOrder} onTrackingChange={onTrackingChange} />)}
+    </article>}
   </div>;
 }

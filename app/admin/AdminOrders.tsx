@@ -3,11 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import AdminQuotes from "./AdminQuotes";
-import OrderProgress from "@/app/components/OrderProgress";
-import { nextOrderActionLabels, nextOrderStatus, orderStatusLabels, type OrderStatus } from "@/lib/order-workflow";
+import AdminQuotes, { type AdminOrderRecord } from "./AdminQuotes";
+import { orderStatusLabels, type OrderStatus } from "@/lib/order-workflow";
 
-type Order = { id: string; order_number: string; name: string; email: string; item_summary: string; total: number; status: OrderStatus; tracking_number?: string; history: { status: string; created_at: string }[] };
+type Order = AdminOrderRecord;
 type Member = { id: string; name: string; email: string; role: "member" | "admin"; status: "active" | "suspended"; created_at: string };
 type TrackedCart = {
   id: string;
@@ -25,7 +24,7 @@ export default function AdminOrders({ embedded = false }: { embedded?: boolean }
   const [orders, setOrders] = useState<Order[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [carts, setCarts] = useState<TrackedCart[]>([]);
-  const [section, setSection] = useState<"quotes" | "orders" | "carts" | "members">("quotes");
+  const [section, setSection] = useState<"orders" | "carts" | "members">("orders");
   const [notice, setNotice] = useState("");
   const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
   const [refreshingOrders, setRefreshingOrders] = useState(false);
@@ -70,9 +69,8 @@ export default function AdminOrders({ embedded = false }: { embedded?: boolean }
     setNotice(response.ok ? "會員權限已更新。" : data.error);
     if (response.ok) loadMembers();
   };
-  const title = section === "quotes" ? "專屬報價／客製訂單" : section === "orders" ? "訂單管理" : section === "carts" ? "未結帳購物車" : "會員權限";
+  const title = section === "orders" ? "訂單管理" : section === "carts" ? "未結帳購物車" : "會員權限";
   const navigation = <>
-    <button className={section === "quotes" ? "active" : ""} onClick={() => setSection("quotes")}>客製訂單</button>
     <button className={section === "orders" ? "active" : ""} onClick={() => { setSection("orders"); void loadOrders(true); }}>訂單管理</button>
     <button className={section === "carts" ? "active" : ""} onClick={() => setSection("carts")}>購物車追蹤</button>
     <button className={section === "members" ? "active" : ""} onClick={() => setSection("members")}>會員權限</button>
@@ -84,26 +82,15 @@ export default function AdminOrders({ embedded = false }: { embedded?: boolean }
         <h1>{title}</h1>
         {notice && <p className="member-notice">{notice}</p>}
 
-        {section === "quotes" && <AdminQuotes />}
-
-        {section === "orders" && <>
-          <div className="admin-sync-bar"><span>{lastOrdersSyncedAt ? `會員訂單同步於 ${lastOrdersSyncedAt.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "正在同步會員訂單…"}</span><button type="button" disabled={refreshingOrders} onClick={() => void loadOrders(true)}>{refreshingOrders ? "同步中…" : "重新同步"}</button></div>
-          <p className="admin-orders-lead">客戶確認客製訂單後，正式訂單才會出現在這裡。請依序更新製作與配送進度。</p>
-          <article className="admin-order-table">
-            <h2>正式訂單與製作流程</h2>
-            {orders.length === 0 ? <p>目前尚未有客戶確認完成的訂單。</p> : orders.map((order) => {
-              const next = nextOrderStatus[order.status];
-              return <section className="admin-order-workflow" key={order.id}>
-                <header><div><b>{order.order_number}</b><span>{order.name} · {order.email}</span><small>{order.item_summary}</small></div><div><strong>NT$ {order.total.toLocaleString()}</strong><i className={`status ${order.status}`}>{orderStatusLabels[order.status]}</i></div></header>
-                <OrderProgress status={order.status} history={order.history} />
-                <footer>
-                  <label>物流單號<input value={order.tracking_number || ""} placeholder="進入運送階段時填寫" onChange={(event) => setOrders(orders.map((item) => item.id === order.id ? { ...item, tracking_number: event.target.value } : item))} /></label>
-                  <div><button type="button" disabled={updatingOrder === order.id} onClick={() => void updateOrder(order)}>儲存物流資料</button>{next && <button type="button" className="primary" disabled={updatingOrder === order.id} onClick={() => void updateOrder(order, next)}>{updatingOrder === order.id ? "更新中…" : nextOrderActionLabels[order.status]}</button>}{(order.status === "pending" || order.status === "making") && <button type="button" className="danger" disabled={updatingOrder === order.id} onClick={() => void updateOrder(order, "cancelled")}>取消訂單</button>}</div>
-                </footer>
-              </section>;
-            })}
-          </article>
-        </>}
+        {section === "orders" && <AdminQuotes
+          orders={orders}
+          updatingOrder={updatingOrder}
+          refreshingOrders={refreshingOrders}
+          lastOrdersSyncedAt={lastOrdersSyncedAt}
+          onRefreshOrders={() => loadOrders(true)}
+          onUpdateOrder={updateOrder}
+          onTrackingChange={(id, trackingNumber) => setOrders((current) => current.map((order) => order.id === id ? { ...order, tracking_number: trackingNumber } : order))}
+        />}
 
         {section === "carts" && <article className="admin-order-table admin-cart-table">
           <div className="admin-cart-summary"><div><b>{carts.length}</b><span>有商品的會員購物車</span></div><div><b>{carts.reduce((sum, cart) => sum + cart.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0)}</b><span>購物車商品總數</span></div><div><b>NT$ {carts.reduce((sum, cart) => sum + cart.total, 0).toLocaleString()}</b><span>購物車商品總額</span></div></div>

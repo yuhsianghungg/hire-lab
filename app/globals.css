@@ -65,3 +65,43 @@
 /* Member profile details */
 .member-profile-form select{width:100%;padding:13px;border:1px solid #dedbd2;background:#fff;color:var(--ink);outline-color:var(--sage)}.member-phone-fields{display:grid;grid-template-columns:minmax(145px,.72fr) minmax(150px,1.28fr);gap:9px}.member-birthday-fields{display:grid;grid-template-columns:1.2fr .9fr .9fr;gap:9px}.member-profile-form select:focus,.member-profile-form input:focus{border-color:var(--sage)}
 @media(max-width:480px){.member-phone-fields{grid-template-columns:1fr}.member-birthday-fields{grid-template-columns:1fr 1fr 1fr}.member-birthday-fields select{padding-left:8px;padding-right:6px}}
+
+/* Unified custom-order management */
+.custom-order-lifecycle{
+  grid-template-columns:repeat(7,minmax(125px,1fr));
+  margin:18px 0 22px;
+  overflow-x:auto;
+}
+.custom-order-lifecycle li{padding:14px 12px}
+.quote-order-syncing{
+  margin:17px 0;
+  padding:12px 14px;
+  background:#edf3e9;
+  border-left:3px solid var(--sage);
+  font-size:11px;
+  color:#56635a;
+}
+.quote-linked-workflow{
+  margin-top:18px;
+  padding:18px;
+  background:#f8f6ef;
+  border:1px solid rgba(36,50,45,.12);
+}
+.unified-custom-order{padding-bottom:26px}
+@media(max-width:760px){
+  .custom-order-overview.custom-order-lifecycle{
+    grid-template-columns:repeat(7,minmax(125px,1fr));
+  }
+  .custom-order-overview.custom-order-lifecycle li{
+    border-right:1px solid rgba(36,50,45,.1)!important;
+    border-bottom:0!important;
+  }
+  .custom-order-overview.custom-order-lifecycle li:last-child{
+    border-right:0!important;
+  }
+}
+@media(max-width:480px){
+  .custom-order-overview.custom-order-lifecycle{
+    grid-template-columns:repeat(7,minmax(118px,1fr));
+  }
+}
