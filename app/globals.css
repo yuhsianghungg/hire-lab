@@ -60,3 +60,7 @@
 
 @media(max-width:760px){.custom-order-overview{grid-template-columns:1fr 1fr}.custom-order-overview li:nth-child(2){border-right:0}.custom-order-overview li:nth-child(-n+2){border-bottom:1px solid rgba(36,50,45,.1)}.order-progress{overflow-x:auto;grid-template-columns:repeat(5,minmax(90px,1fr));padding:4px 0 8px}.admin-order-workflow>header,.admin-order-workflow>footer,.member-order-card>header{display:grid}.admin-order-workflow>header>div:last-child,.member-order-card>header>div:last-child{justify-items:start;text-align:left}.admin-order-workflow>footer>div{justify-content:flex-start}.admin-order-workflow>footer label{width:100%}}
 @media(max-width:480px){.custom-order-overview{grid-template-columns:1fr}.custom-order-overview li{border-right:0;border-bottom:1px solid rgba(36,50,45,.1)!important}.custom-order-overview li:last-child{border-bottom:0!important}}
+
+/* Member profile details */
+.member-profile-form select{width:100%;padding:13px;border:1px solid #dedbd2;background:#fff;color:var(--ink);outline-color:var(--sage)}.member-phone-fields{display:grid;grid-template-columns:minmax(145px,.72fr) minmax(150px,1.28fr);gap:9px}.member-birthday-fields{display:grid;grid-template-columns:1.2fr .9fr .9fr;gap:9px}.member-profile-form select:focus,.member-profile-form input:focus{border-color:var(--sage)}
+@media(max-width:480px){.member-phone-fields{grid-template-columns:1fr}.member-birthday-fields{grid-template-columns:1fr 1fr 1fr}.member-birthday-fields select{padding-left:8px;padding-right:6px}}
