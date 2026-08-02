@@ -61,8 +61,8 @@ export async function PATCH(request: Request) {
   if (!id || !["accept", "request_revision"].includes(action)) return Response.json({ error: "無效的報價操作。" }, { status: 400 });
 
   const quote = await env.DB.prepare(
-    "SELECT id,quote_number,title,total,status,expires_at,order_id FROM quotes WHERE id=? AND user_id=?",
-  ).bind(id, member.id).first<{ id: string; quote_number: string; title: string; total: number; status: string; expires_at: string | null; order_id: string | null }>();
+    "SELECT id,quote_number,title,total,status,expires_at,order_id,updated_at FROM quotes WHERE id=? AND user_id=?",
+  ).bind(id, member.id).first<{ id: string; quote_number: string; title: string; total: number; status: string; expires_at: string | null; order_id: string | null; updated_at: string }>();
   if (!quote) return Response.json({ error: "找不到這份報價。" }, { status: 404 });
   if (quote.status !== "sent") return Response.json({ error: quote.status === "accepted" ? "這份報價已經接受。" : "這份報價目前無法操作。" }, { status: 409 });
   if (quote.expires_at && new Date(quote.expires_at).getTime() <= Date.now()) return Response.json({ error: "這份報價已過期，請聯絡我們重新報價。" }, { status: 409 });
@@ -86,8 +86,8 @@ export async function PATCH(request: Request) {
   const itemSummary = `${quote.title}｜${items.map((item) => `${item.item_name} × ${item.quantity}`).join("、")}`;
   try {
     await env.DB.batch([
-      env.DB.prepare("INSERT INTO orders (id,order_number,user_id,item_summary,total,status,tracking_number,quote_id,created_at,updated_at) SELECT ?,?,user_id,?,total,'pending',NULL,id,?,? FROM quotes WHERE id=? AND user_id=? AND status='sent' AND order_id IS NULL AND (expires_at IS NULL OR expires_at>?)")
-        .bind(orderId, orderNumber, itemSummary, timestamp, timestamp, id, member.id, timestamp),
+      env.DB.prepare("INSERT INTO orders (id,order_number,user_id,item_summary,total,status,tracking_number,quote_id,created_at,updated_at) SELECT ?,?,user_id,?,total,'pending',NULL,id,?,? FROM quotes WHERE id=? AND user_id=? AND status='sent' AND order_id IS NULL AND updated_at=? AND (expires_at IS NULL OR expires_at>?)")
+        .bind(orderId, orderNumber, itemSummary, timestamp, timestamp, id, member.id, quote.updated_at, timestamp),
       env.DB.prepare("UPDATE quotes SET status='accepted',accepted_at=?,order_id=?,updated_at=? WHERE id=? AND user_id=? AND status='sent' AND EXISTS (SELECT 1 FROM orders WHERE orders.id=? AND orders.quote_id=quotes.id)")
         .bind(timestamp, orderId, timestamp, id, member.id, orderId),
     ]);

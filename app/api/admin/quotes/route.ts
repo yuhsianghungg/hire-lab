@@ -98,13 +98,15 @@ export async function PATCH(request: Request) {
 
   const timestamp = new Date().toISOString();
   const statements = [
-    env.DB.prepare("DELETE FROM quote_items WHERE quote_id=?").bind(id),
-    ...data.items.map((item) => env.DB.prepare("INSERT INTO quote_items (id,quote_id,item_name,specifications,quantity,unit_price) VALUES (?,?,?,?,?,?)")
-      .bind(crypto.randomUUID(), id, item.itemName, item.specifications || null, item.quantity, item.unitPrice)),
-    env.DB.prepare("UPDATE quotes SET user_id=?,title=?,description=?,shipping_fee=?,deposit_amount=?,total=?,status=?,revision=revision+1,expires_at=?,sent_at=?,revision_note=NULL,updated_at=? WHERE id=?")
+    env.DB.prepare("UPDATE quotes SET user_id=?,title=?,description=?,shipping_fee=?,deposit_amount=?,total=?,status=?,revision=revision+1,expires_at=?,sent_at=?,revision_note=NULL,updated_at=? WHERE id=? AND status<>'accepted'")
       .bind(user.id, data.title, data.description || null, data.shippingFee, data.depositAmount, data.total, data.status, data.expiresAt, data.status === "sent" ? timestamp : null, timestamp, id),
+    env.DB.prepare("DELETE FROM quote_items WHERE quote_id=? AND EXISTS (SELECT 1 FROM quotes WHERE id=? AND updated_at=?)").bind(id, id, timestamp),
+    ...data.items.map((item) => env.DB.prepare("INSERT INTO quote_items (id,quote_id,item_name,specifications,quantity,unit_price) SELECT ?,?,?,?,?,? WHERE EXISTS (SELECT 1 FROM quotes WHERE id=? AND updated_at=?)")
+      .bind(crypto.randomUUID(), id, item.itemName, item.specifications || null, item.quantity, item.unitPrice, id, timestamp)),
   ];
   await env.DB.batch(statements);
+  const updated = await env.DB.prepare("SELECT id FROM quotes WHERE id=? AND updated_at=?").bind(id, timestamp).first<{ id: string }>();
+  if (!updated) return Response.json({ error: "報價剛剛已被接受，內容未修改。" }, { status: 409 });
   await writeAudit(actor.id, "quote.update", "quote", id, { status: data.status, total: data.total, memberEmail: data.email });
   return Response.json({ ok: true });
 }
@@ -120,9 +122,11 @@ export async function DELETE(request: Request) {
   if (!quote) return Response.json({ error: "找不到報價單。" }, { status: 404 });
   if (quote.status !== "draft") return Response.json({ error: "只有草稿報價可以刪除；其他狀態請改為取消。" }, { status: 409 });
   await env.DB.batch([
-    env.DB.prepare("DELETE FROM quote_items WHERE quote_id=?").bind(id),
+    env.DB.prepare("DELETE FROM quote_items WHERE quote_id=? AND EXISTS (SELECT 1 FROM quotes WHERE id=? AND status='draft')").bind(id, id),
     env.DB.prepare("DELETE FROM quotes WHERE id=? AND status='draft'").bind(id),
   ]);
+  const remaining = await env.DB.prepare("SELECT id FROM quotes WHERE id=?").bind(id).first<{ id: string }>();
+  if (remaining) return Response.json({ error: "報價狀態已更新，草稿未刪除。" }, { status: 409 });
   await writeAudit(actor.id, "quote.delete", "quote", id, { quoteNumber: quote.quote_number });
   return Response.json({ ok: true });
 }
