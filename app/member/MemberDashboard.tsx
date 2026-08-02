@@ -1,9 +1,9 @@
 "use client";
 
-import { FormEvent, useCallback, useState } from "react";
+import { FormEvent, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import MemberQuotes, { type MemberOrder } from "./MemberQuotes";
+import MemberQuotes from "./MemberQuotes";
 import { countryCallingCodes, genderOptions } from "@/lib/member-profile";
 
 type Member = { id: string; name: string; email: string; phone_country_code: string | null; phone_number: string | null; gender: string | null; birthday: string | null; role: string };
@@ -24,21 +24,8 @@ export default function MemberDashboard({ member }: { member: Member }) {
   const [birthDay, setBirthDay] = useState(member.birthday?.slice(8, 10) || "");
   const [notice, setNotice] = useState("");
   const [passwordNotice, setPasswordNotice] = useState("");
-  const [orders, setOrders] = useState<MemberOrder[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
-
-  const loadOrders = useCallback(async () => {
-    setLoadingOrders(true);
-    try {
-      const response = await fetch("/api/member/orders");
-      const data = await response.json().catch(() => ({})) as { orders?: Order[] };
-      setOrders(response.ok ? data.orders || [] : []);
-    } finally {
-      setLoadingOrders(false);
-    }
-  }, []);
 
   const saveProfile = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -86,7 +73,7 @@ export default function MemberDashboard({ member }: { member: Member }) {
 
   return <main className="member-center">
     <header className="member-header"><Link className="brand" href="/"><Image className="brand-logo" src="/hire-logo.png" alt="hire Lab." width={40} height={40} />hire Lab.</Link><div>{member.role === "admin" && <Link href="/admin">管理後台</Link>}<Link href="/">回到首頁</Link><button type="button" onClick={logout}>登出</button></div></header>
-    <nav className="member-tabs">{tabs.map(([key, label]) => <button type="button" key={key} className={tab === key ? "active" : ""} onClick={() => { setTab(key); if (key === "transactions") void loadOrders(); }}>{label}</button>)}</nav>
+    <nav className="member-tabs">{tabs.map(([key, label]) => <button type="button" key={key} className={tab === key ? "active" : ""} onClick={() => setTab(key)}>{label}</button>)}</nav>
     <section className="member-intro"><div><p className="eyebrow">MY ACCOUNT</p><h1>你好，{member.name}</h1><p>{tab === "profile" ? "管理個人資訊。" : "管理專屬報價與訂單進度。"}</p></div></section>
     {notice && <p className="member-notice member-page-notice">{notice}</p>}
     {tab === "profile" && <section className="member-grid">
@@ -102,7 +89,7 @@ export default function MemberDashboard({ member }: { member: Member }) {
       <article className="member-panel"><p className="eyebrow">SECURITY</p><h2>修改密碼</h2><form className="member-profile-form" onSubmit={changePassword}><label>目前密碼<input name="currentPassword" type="password" required /></label><label>新密碼<input name="newPassword" type="password" minLength={8} required /></label><label>再次輸入新密碼<input name="confirmPassword" type="password" minLength={8} required /></label>{passwordNotice && <p className="member-notice" role="status">{passwordNotice}</p>}<button className="button button-dark" disabled={savingPassword}>{savingPassword ? "更新中…" : "更新密碼"}</button></form></article>
     </section>}
     {tab === "transactions" && <div className="member-business">
-      <MemberQuotes orders={orders} loadingOrders={loadingOrders} onOrderCreated={() => void loadOrders()} />
+      <MemberQuotes />
     </div>}
   </main>;
 }

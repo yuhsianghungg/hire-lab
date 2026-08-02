@@ -2,6 +2,8 @@ import { env } from "cloudflare:workers";
 import { ensureMemberSchema, requireRole, writeAudit } from "@/lib/member-auth";
 import { makeQuoteNumber, validateQuotePayload } from "@/lib/quotes";
 
+const noStoreHeaders = { "cache-control": "no-store, max-age=0" };
+
 type QuoteRow = {
   id: string;
   quote_number: string;
@@ -52,7 +54,7 @@ async function loadQuotes() {
 export async function GET() {
   await ensureMemberSchema();
   if (!await requireRole(["admin"])) return Response.json({ error: "無管理權限。" }, { status: 403 });
-  return Response.json({ quotes: await loadQuotes() });
+  return Response.json({ quotes: await loadQuotes() }, { headers: noStoreHeaders });
 }
 
 export async function POST(request: Request) {

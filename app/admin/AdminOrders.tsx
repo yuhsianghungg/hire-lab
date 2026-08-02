@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import AdminQuotes from "./AdminQuotes";
@@ -28,12 +28,30 @@ export default function AdminOrders() {
   const [section, setSection] = useState<"quotes" | "orders" | "carts" | "members">("quotes");
   const [notice, setNotice] = useState("");
   const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
+  const [refreshingOrders, setRefreshingOrders] = useState(false);
+  const [lastOrdersSyncedAt, setLastOrdersSyncedAt] = useState<Date | null>(null);
 
-  const loadOrders = () => fetch("/api/admin/orders").then((response) => response.json()).then((data) => data.error ? setNotice(data.error) : setOrders(data.orders || []));
-  const loadCarts = () => fetch("/api/admin/carts").then((response) => response.json()).then((data) => data.error ? setNotice(data.error) : setCarts(data.carts || []));
-  const loadMembers = () => fetch("/api/admin/members").then((response) => response.json()).then((data) => data.error ? setNotice(data.error) : setMembers(data.members || []));
+  const loadOrders = useCallback(async (quiet = false) => {
+    if (quiet) setRefreshingOrders(true);
+    try {
+      const response = await fetch("/api/admin/orders", { cache: "no-store" });
+      const data = await response.json().catch(() => ({})) as { error?: string; orders?: Order[] };
+      if (!response.ok) setNotice(data.error || "目前無法同步訂單。");
+      else { setOrders(data.orders || []); setLastOrdersSyncedAt(new Date()); }
+    } catch { setNotice("目前無法連線，請稍後再試。"); }
+    finally { setRefreshingOrders(false); }
+  }, []);
+  const loadCarts = useCallback(() => fetch("/api/admin/carts", { cache: "no-store" }).then((response) => response.json()).then((data) => data.error ? setNotice(data.error) : setCarts(data.carts || [])).catch(() => setNotice("目前無法同步購物車。")), []);
+  const loadMembers = useCallback(() => fetch("/api/admin/members", { cache: "no-store" }).then((response) => response.json()).then((data) => data.error ? setNotice(data.error) : setMembers(data.members || [])).catch(() => setNotice("目前無法同步會員資料。")), []);
 
-  useEffect(() => { loadOrders(); loadCarts(); loadMembers(); }, []);
+  useEffect(() => {
+    const initial = window.setTimeout(() => { void loadOrders(); void loadCarts(); void loadMembers(); }, 0);
+    const refresh = () => { if (document.visibilityState === "visible") void loadOrders(true); };
+    const interval = window.setInterval(refresh, 15000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => { window.clearTimeout(initial); window.clearInterval(interval); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
+  }, [loadCarts, loadMembers, loadOrders]);
 
   const updateOrder = async (order: Order, status: OrderStatus = order.status) => {
     if (status === "cancelled" && !window.confirm(`確定取消訂單 ${order.order_number}？`)) return;
@@ -42,7 +60,7 @@ export default function AdminOrders() {
       const response = await fetch("/api/admin/orders", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: order.id, status, trackingNumber: order.tracking_number }) });
       const data = await response.json().catch(() => ({})) as { error?: string };
       setNotice(response.ok ? status === order.status ? "物流資料已儲存。" : `訂單已更新為「${orderStatusLabels[status]}」。` : data.error || "目前無法更新訂單。");
-      if (response.ok) { await loadOrders(); await loadCarts(); }
+      if (response.ok) { await loadOrders(true); await loadCarts(); }
     } catch { setNotice("目前無法連線，請稍後再試。"); }
     finally { setUpdatingOrder(null); }
   };
@@ -60,7 +78,7 @@ export default function AdminOrders() {
         <Link className="brand" href="/"><Image className="brand-logo" src="/hire-logo.png" alt="hire Lab." width={40} height={40} />hire Lab.</Link>
         <div>
           <button className={section === "quotes" ? "active" : ""} onClick={() => setSection("quotes")}>客製訂單</button>
-          <button className={section === "orders" ? "active" : ""} onClick={() => setSection("orders")}>訂單管理</button>
+          <button className={section === "orders" ? "active" : ""} onClick={() => { setSection("orders"); void loadOrders(true); }}>訂單管理</button>
           <button className={section === "carts" ? "active" : ""} onClick={() => setSection("carts")}>購物車追蹤</button>
           <button className={section === "members" ? "active" : ""} onClick={() => setSection("members")}>會員權限</button>
           <a href="/member">會員中心</a>
@@ -74,6 +92,7 @@ export default function AdminOrders() {
         {section === "quotes" && <AdminQuotes />}
 
         {section === "orders" && <>
+          <div className="admin-sync-bar"><span>{lastOrdersSyncedAt ? `會員訂單同步於 ${lastOrdersSyncedAt.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "正在同步會員訂單…"}</span><button type="button" disabled={refreshingOrders} onClick={() => void loadOrders(true)}>{refreshingOrders ? "同步中…" : "重新同步"}</button></div>
           <p className="admin-orders-lead">客戶確認客製訂單後，正式訂單才會出現在這裡。請依序更新製作與配送進度。</p>
           <article className="admin-order-table">
             <h2>正式訂單與製作流程</h2>

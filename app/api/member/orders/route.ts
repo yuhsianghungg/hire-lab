@@ -1,6 +1,8 @@
 import { env } from "cloudflare:workers";
 import { currentMember, ensureMemberSchema } from "@/lib/member-auth";
 
+const noStoreHeaders = { "cache-control": "no-store, max-age=0" };
+
 type OrderRow = { id: string; order_number: string; item_summary: string; total: number; status: string; tracking_number: string | null; quote_id: string | null; created_at: string; updated_at: string };
 type HistoryRow = { order_id: string; status: string; created_at: string };
 
@@ -16,5 +18,5 @@ export async function GET() {
   ).bind(member.id).all<HistoryRow>();
   const historyByOrder = new Map<string, HistoryRow[]>();
   for (const entry of history) historyByOrder.set(entry.order_id, [...(historyByOrder.get(entry.order_id) || []), entry]);
-  return Response.json({ orders: orders.map((order) => ({ ...order, history: historyByOrder.get(order.id) || [] })) });
+  return Response.json({ orders: orders.map((order) => ({ ...order, history: historyByOrder.get(order.id) || [] })) }, { headers: noStoreHeaders });
 }

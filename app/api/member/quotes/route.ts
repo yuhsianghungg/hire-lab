@@ -2,6 +2,8 @@ import { env } from "cloudflare:workers";
 import { currentMember, ensureMemberSchema, writeAudit } from "@/lib/member-auth";
 import { makeOrderNumber } from "@/lib/quotes";
 
+const noStoreHeaders = { "cache-control": "no-store, max-age=0" };
+
 type QuoteRow = {
   id: string;
   quote_number: string;
@@ -47,7 +49,7 @@ export async function GET() {
   const byQuote = new Map<string, QuoteItemRow[]>();
   for (const item of items) byQuote.set(item.quote_id, [...(byQuote.get(item.quote_id) || []), item]);
   const currentTime = Date.now();
-  return Response.json({ quotes: quotes.map((quote) => ({ ...quote, expired: Boolean(quote.expires_at && new Date(quote.expires_at).getTime() <= currentTime), items: byQuote.get(quote.id) || [] })) });
+  return Response.json({ quotes: quotes.map((quote) => ({ ...quote, expired: Boolean(quote.expires_at && new Date(quote.expires_at).getTime() <= currentTime), items: byQuote.get(quote.id) || [] })) }, { headers: noStoreHeaders });
 }
 
 export async function PATCH(request: Request) {

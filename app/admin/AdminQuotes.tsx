@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import QuoteConfirmationProgress from "@/app/components/QuoteConfirmationProgress";
 
 type QuoteItem = {
   id?: string;
@@ -59,29 +60,29 @@ export default function AdminQuotes() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const total = useMemo(() => form.items.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.unitPrice || 0), 0) + Number(form.shippingFee || 0), [form.items, form.shippingFee]);
 
-  const load = async () => {
+  const load = useCallback(async (quiet = false) => {
+    if (quiet) setRefreshing(true);
     try {
-      const response = await fetch("/api/admin/quotes");
+      const response = await fetch("/api/admin/quotes", { cache: "no-store" });
       const data = await responseData(response);
       if (!response.ok) setNotice(data.error || "目前無法讀取報價單。");
-      else setQuotes(data.quotes || []);
+      else { setQuotes(data.quotes || []); setLastSyncedAt(new Date()); }
     } catch { setNotice("目前無法連線，請稍後再試。"); }
-  };
+    finally { setRefreshing(false); }
+  }, []);
 
   useEffect(() => {
-    let active = true;
-    fetch("/api/admin/quotes")
-      .then(async (response) => ({ response, data: await responseData(response) }))
-      .then(({ response, data }) => {
-        if (!active) return;
-        if (!response.ok) setNotice(data.error || "目前無法讀取報價單。");
-        else setQuotes(data.quotes || []);
-      })
-      .catch(() => { if (active) setNotice("目前無法連線，請稍後再試。"); });
-    return () => { active = false; };
-  }, []);
+    const initial = window.setTimeout(() => void load(), 0);
+    const refresh = () => { if (document.visibilityState === "visible") void load(true); };
+    const interval = window.setInterval(refresh, 15000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => { window.clearTimeout(initial); window.clearInterval(interval); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
+  }, [load]);
 
   const setItem = (index: number, patch: Partial<FormItem>) => setForm((current) => ({
     ...current,
@@ -121,7 +122,7 @@ export default function AdminQuotes() {
       else {
         setNotice(editingId ? "客製訂單內容已更新，版本已遞增。" : form.status === "sent" ? "客製訂單已建立並送至會員中心等待確認。" : "客製訂單草稿已建立。");
         reset();
-        await load();
+        await load(true);
       }
     } catch { setNotice("目前無法連線，請稍後再試。"); }
     finally { setSaving(false); }
@@ -133,18 +134,13 @@ export default function AdminQuotes() {
       const response = await fetch("/api/admin/quotes", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: quote.id }) });
       const data = await responseData(response);
       setNotice(response.ok ? "草稿已刪除。" : data.error || "無法刪除草稿。");
-      if (response.ok) { if (editingId === quote.id) reset(); await load(); }
+      if (response.ok) { if (editingId === quote.id) reset(); await load(true); }
     } catch { setNotice("目前無法連線，請稍後再試。"); }
   };
 
   return <div className="quote-admin">
+    <div className="admin-sync-bar"><span>{lastSyncedAt ? `前後台同步於 ${lastSyncedAt.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "正在同步客製訂單…"}</span><button type="button" disabled={refreshing} onClick={() => void load(true)}>{refreshing ? "同步中…" : "重新同步"}</button></div>
     <p className="admin-orders-lead">先完成需求討論，再由店家建立專屬報價／客製訂單；客戶確認後，系統才會鎖定內容並建立正式訂單。</p>
-    <ol className="custom-order-overview" aria-label="客製訂單建立流程">
-      <li className="complete"><span>1</span><div><b>店家與客戶討論</b><small>確認款式、規格與交期</small></div></li>
-      <li className="current"><span>2</span><div><b>店家建立訂單</b><small>建立內容與專屬報價</small></div></li>
-      <li><span>3</span><div><b>客戶確認訂單</b><small>確認或提出修改需求</small></div></li>
-      <li><span>4</span><div><b>訂單建立完成</b><small>鎖定內容並進入製作</small></div></li>
-    </ol>
     {notice && <p className="member-notice quote-notice" role="status">{notice}</p>}
     <article className="admin-order-create quote-editor" id="quote-editor">
       <div className="quote-editor-head"><div><p className="eyebrow">CUSTOM ORDER</p><h2>{editingId ? "編輯客製訂單" : "建立客製訂單"}</h2></div>{editingId && <button type="button" onClick={reset}>取消編輯</button>}</div>
@@ -174,6 +170,7 @@ export default function AdminQuotes() {
       <h2>全部客製訂單</h2>
       {quotes.length === 0 ? <p>目前尚未建立客製訂單。</p> : quotes.map((quote) => <section className="quote-admin-card" key={quote.id}>
         <div className="quote-admin-summary"><div><b>{quote.quote_number}</b><h3>{quote.title}</h3><span>{quote.name} · {quote.email}</span></div><div><i className={`quote-status ${quote.status}`}>{labels[quote.status] || quote.status}</i><strong>NT$ {quote.total.toLocaleString()}</strong><small>第 {quote.revision} 版</small></div></div>
+        <QuoteConfirmationProgress status={quote.status} hasOrder={Boolean(quote.order_id)} />
         <div className="quote-admin-items">{quote.items.map((item) => <span key={item.id}>{item.item_name} × {item.quantity}／NT$ {((item.unit_price || 0) * item.quantity).toLocaleString()}{item.specifications ? ` · ${item.specifications}` : ""}</span>)}</div>
         {quote.revision_note && <p className="quote-revision-note"><b>會員修改需求</b>{quote.revision_note}</p>}
         <footer><small>{quote.expires_at ? `有效至 ${new Date(quote.expires_at).toLocaleDateString("zh-TW")}` : "未設定有效期限"}</small><div>{quote.status !== "accepted" && <button type="button" onClick={() => edit(quote)}>{quote.status === "revision_requested" ? "修改並重新送出" : "編輯"}</button>}{quote.status === "draft" && <button type="button" className="danger" onClick={() => void remove(quote)}>刪除草稿</button>}</div></footer>

@@ -2,6 +2,8 @@ import { env } from "cloudflare:workers";
 import { ensureMemberSchema, requireRole, writeAudit } from "@/lib/member-auth";
 import { isAllowedOrderTransition, isOrderStatus, orderStatusLabels } from "@/lib/order-workflow";
 
+const noStoreHeaders = { "cache-control": "no-store, max-age=0" };
+
 type OrderRow = {
   id: string;
   order_number: string;
@@ -33,7 +35,7 @@ export async function GET() {
   ).all<HistoryRow>();
   const historyByOrder = new Map<string, HistoryRow[]>();
   for (const entry of history) historyByOrder.set(entry.order_id, [...(historyByOrder.get(entry.order_id) || []), entry]);
-  return Response.json({ orders: orders.map((order) => ({ ...order, history: historyByOrder.get(order.id) || [] })) });
+  return Response.json({ orders: orders.map((order) => ({ ...order, history: historyByOrder.get(order.id) || [] })) }, { headers: noStoreHeaders });
 }
 
 export async function PATCH(request: Request) {
